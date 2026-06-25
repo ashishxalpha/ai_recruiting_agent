@@ -28,9 +28,9 @@ def get_job_dispatcher(background_tasks: BackgroundTasks) -> FastAPIJobDispatche
     return FastAPIJobDispatcher(background_tasks=background_tasks)
 
 def get_resume_upload_service(
+    background_tasks: BackgroundTasks,
     session: AsyncSession = fastapi.Depends(get_db_session),
     storage_provider: LocalStorageProvider = fastapi.Depends(get_storage_provider),
-    background_tasks: BackgroundTasks = fastapi.Depends(),
 ) -> ResumeUploadService:
     return ResumeUploadService(
         document_repo=SQLAlchemyCandidateDocumentRepository(session),
