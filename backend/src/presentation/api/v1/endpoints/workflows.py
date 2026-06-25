@@ -5,7 +5,7 @@ from uuid import UUID
 import uuid
 from pydantic import BaseModel
 
-from src.presentation.api.dependencies import get_db
+from src.presentation.api.dependencies import get_db_session
 
 router = APIRouter()
 
@@ -17,7 +17,7 @@ class WorkflowStartRequest(BaseModel):
 async def start_workflow(
     request: WorkflowStartRequest,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     """Start a new LangGraph workflow."""
     workflow_id = uuid.uuid4()
@@ -31,7 +31,7 @@ async def start_workflow(
 @router.get("/{workflow_id}")
 async def get_workflow_state(
     workflow_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     """Get the current state of a workflow."""
     return {
@@ -46,7 +46,7 @@ async def resume_workflow(
     workflow_id: UUID,
     request: Dict[str, Any],
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     """Resume a paused workflow (e.g., after human approval)."""
     # In a real setup, we would inject WorkflowEngine and call engine.resume(workflow_id, request)
@@ -68,7 +68,7 @@ async def resume_workflow(
 @router.post("/{workflow_id}/cancel")
 async def cancel_workflow(
     workflow_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     """Cancel a running or paused workflow."""
     return {"status": "CANCELLED"}
@@ -76,7 +76,7 @@ async def cancel_workflow(
 @router.get("/{workflow_id}/history")
 async def get_workflow_history(
     workflow_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     """Get execution history (checkpoints) for a workflow."""
     return []
@@ -84,7 +84,7 @@ async def get_workflow_history(
 @router.get("/{workflow_id}/graph")
 async def get_workflow_graph(
     workflow_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     """Get graph metadata and progress for frontend visualization."""
     return {

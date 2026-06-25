@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.presentation.api.dependencies import get_db
+from src.presentation.api.dependencies import get_db_session
 from src.application.services.ranking_engine import CandidateRankingEngine
 from src.domain.entities import CandidateMatchResult
 
@@ -17,7 +17,7 @@ class SearchCandidatesRequest(BaseModel):
 @router.post("/candidates", response_model=List[CandidateMatchResult])
 async def search_candidates(
     request: SearchCandidatesRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ):
     """
     Perform a hybrid semantic search for candidates that match the given job requirement.

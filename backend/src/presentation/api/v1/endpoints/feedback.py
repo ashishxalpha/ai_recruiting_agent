@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel
 from datetime import datetime
 
-from src.presentation.api.dependencies import get_db
+from src.presentation.api.dependencies import get_db_session
 from src.domain.enums import RecruiterDecision
 from src.domain.entities import RecruiterFeedback
 from src.infrastructure.database.repositories.feedback_repository import RecruiterFeedbackRepository
@@ -30,7 +30,7 @@ class FeedbackUpdateRequest(BaseModel):
 async def submit_feedback(
     match_id: UUID,
     request: FeedbackCreateRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     """Submit recruiter feedback for a specific candidate match."""
     import uuid
@@ -69,7 +69,7 @@ async def submit_feedback(
 @router.get("/matches/{match_id}/feedback")
 async def get_feedback(
     match_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     repo = RecruiterFeedbackRepository(db)
     feedback = await repo.get_by_match_id(match_id)
@@ -81,7 +81,7 @@ async def get_feedback(
 async def update_feedback(
     feedback_id: UUID,
     request: FeedbackUpdateRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     repo = RecruiterFeedbackRepository(db)
     existing = await repo.get_by_id(feedback_id)

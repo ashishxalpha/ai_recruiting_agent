@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from datetime import datetime
 import uuid
 
-from src.presentation.api.dependencies import get_db
+from src.presentation.api.dependencies import get_db_session
 from src.domain.enums import GroundTruthEventType
 from src.domain.entities import GroundTruthEvent
 from src.infrastructure.database.repositories.ground_truth_repository import GroundTruthRepository
@@ -25,7 +25,7 @@ class GroundTruthEventCreateRequest(BaseModel):
 @router.post("/outcomes")
 async def record_outcome(
     request: GroundTruthEventCreateRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     """Record a timeline event for candidate progression."""
     repo = GroundTruthRepository(db)
@@ -57,7 +57,7 @@ async def record_outcome(
 @router.get("/outcomes/{event_id}")
 async def get_outcome(
     event_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     repo = GroundTruthRepository(db)
     event = await repo.get_by_id(event_id)
