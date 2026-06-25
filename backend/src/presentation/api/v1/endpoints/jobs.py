@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from src.domain.enums import JobStatus, JobRequirementStatus, EmbeddingType
 from src.application.services.job_service import BackgroundJobService
-from src.presentation.api.dependencies import get_job_service, get_db
+from src.presentation.api.dependencies import get_job_service, get_db_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.observability.tracing import get_tracer
 
@@ -67,7 +67,7 @@ async def execute_job(
 @router.post("/requirements")
 async def create_job_requirement(
     request: JobRequirementCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     """Create a new job requirement to match candidates against."""
     with tracer.start_as_current_span("API.POST./api/v1/jobs/requirements"):
