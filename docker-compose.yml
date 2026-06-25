@@ -20,6 +20,19 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./backend
@@ -30,6 +43,7 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-copilot}:${POSTGRES_PASSWORD:-copilot_password}@db:5432/${POSTGRES_DB:-ai_recruiting}
       - STORAGE_BASE_PATH=/storage
+      - REDIS_URL=redis://redis:6379/0
     ports:
       - "8000:8000"
     volumes:
@@ -59,6 +73,7 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
   storage_resumes:
   storage_documents:
   storage_temp:
