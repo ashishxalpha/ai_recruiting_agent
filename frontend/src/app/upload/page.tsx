@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, CheckCircle2 } from "lucide-react";
@@ -8,14 +8,56 @@ import { toast } from "sonner";
 
 export default function ResumeUploadPage() {
   const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = () => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File is too large. Maximum size is 10MB.");
+      return;
+    }
+
+    // Validate type
+    const validTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Invalid file type. Only PDF and DOCX are allowed.");
+      return;
+    }
+
     setUploading(true);
-    // Simulate upload delay
-    setTimeout(() => {
-      setUploading(false);
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${apiUrl}/api/v1/resumes/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.detail || "Upload failed");
+      }
+
       toast.success("Resume uploaded successfully. Extraction pipeline started.");
-    }, 2000);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to upload resume.");
+    } finally {
+      setUploading(false);
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -35,9 +77,18 @@ export default function ResumeUploadPage() {
         <CardContent className="space-y-4">
           <div className="border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors rounded-lg p-12 flex flex-col items-center justify-center text-center">
             <Upload className="w-10 h-10 text-muted-foreground mb-4" />
-            <p className="text-sm font-medium mb-1">Click to upload or drag and drop</p>
+            <p className="text-sm font-medium mb-1">Click to upload</p>
             <p className="text-xs text-muted-foreground mb-4">Max file size: 10MB</p>
-            <Button onClick={handleUpload} disabled={uploading}>
+            
+            <input 
+              type="file" 
+              className="hidden" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+            />
+            
+            <Button onClick={handleButtonClick} disabled={uploading}>
               {uploading ? "Uploading..." : "Select File"}
             </Button>
           </div>
