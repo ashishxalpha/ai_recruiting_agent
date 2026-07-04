@@ -1,9 +1,15 @@
 from src.application.workflows.state import RecruitingWorkflowState
 from src.application.workflows.interfaces import WorkflowNode
 
+from typing import Optional
+from src.application.workflows.interfaces import NodeRetryPolicy
+
 # Factory helper for wrapping simple application services
-def create_service_node(service_function, node_name: str) -> WorkflowNode:
+def create_service_node(service_function, node_name: str, retry_policy: Optional[NodeRetryPolicy] = None) -> WorkflowNode:
     class ServiceNodeWrapper(WorkflowNode):
+        @property
+        def retry_policy(self) -> Optional[NodeRetryPolicy]:
+            return retry_policy
         async def execute(self, state: RecruitingWorkflowState) -> RecruitingWorkflowState:
             import uuid
             import datetime

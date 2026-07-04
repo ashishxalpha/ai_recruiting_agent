@@ -3,7 +3,7 @@ from src.domain.organization_models import AgentSkill
 
 class SkillPipeline:
     async def execute(self, payload: Any) -> Any:
-        pass
+        raise NotImplementedError("feature_available: false")
 
 class SequentialSkillPipeline(SkillPipeline):
     def __init__(self, skills: List[AgentSkill]):
@@ -26,7 +26,7 @@ class ConditionalSkillPipeline(SkillPipeline):
         self.false_pipeline = false_pipeline
 
     async def execute(self, payload: Any) -> Any:
-        pass
+        raise NotImplementedError("feature_available: false")
 
 class FallbackSkillPipeline(SkillPipeline):
     def __init__(self, primary: SkillPipeline, fallback: SkillPipeline):
@@ -34,4 +34,4 @@ class FallbackSkillPipeline(SkillPipeline):
         self.fallback = fallback
 
     async def execute(self, payload: Any) -> Any:
-        pass
+        raise NotImplementedError("feature_available: false")

@@ -41,7 +41,8 @@ async def execute_resume_extraction_job(job_id: uuid.UUID):
                 from src.infrastructure.providers.embedding.openai import OpenAIEmbeddingProvider
                 from src.infrastructure.database.repositories.embedding_repository import CandidateEmbeddingRepository
                 
-                api_key = os.getenv("OPENAI_API_KEY", "dummy_key")
+                from src.infrastructure.config import get_openai_api_key
+                api_key = get_openai_api_key()
                 ai_provider = OpenAIExtractionProvider(api_key=api_key)
                 embedding_provider = OpenAIEmbeddingProvider(api_key=api_key)
                 

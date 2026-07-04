@@ -2,16 +2,137 @@
 
 import { use } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Network, History, ArrowLeft, Play } from "lucide-react";
+import { Briefcase, Network, History, ArrowLeft, Play, Users, BarChart3, CheckCircle, FileText, Settings } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { 
+  useJobDetails,
+  useJobCandidates,
+  useJobMatches,
+  useJobWorkflow,
+  useJobAnalytics,
+  useJobFeedback,
+  useJobDocuments,
+  useJobHistory
+} from "@/hooks/useJobs";
+import { ErrorState } from "@/components/ui/error-state";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Isolated Tab Components for Lazy Loading
+
+function CandidatesTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useJobCandidates(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load candidates" />;
+  return (
+    <Card>
+      <CardHeader><CardTitle>Applied Candidates</CardTitle></CardHeader>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+    </Card>
+  );
+}
+
+function MatchingTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useJobMatches(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load matches" />;
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <CardTitle>Semantic Matching Results</CardTitle>
+          <Button variant="outline" size="sm"><Play className="w-4 h-4 mr-2" /> Run Matching Engine</Button>
+        </div>
+      </CardHeader>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+    </Card>
+  );
+}
+
+function WorkflowTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useJobWorkflow(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load workflow data" />;
+  return (
+    <Card>
+      <CardHeader><CardTitle>Recruitment Workflow</CardTitle></CardHeader>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+    </Card>
+  );
+}
+
+function AnalyticsTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useJobAnalytics(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load analytics" />;
+  return (
+    <Card>
+      <CardHeader><CardTitle>Recruitment Analytics</CardTitle></CardHeader>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+    </Card>
+  );
+}
+
+function FeedbackTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useJobFeedback(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load feedback" />;
+  return (
+    <Card>
+      <CardHeader><CardTitle>Recruiter Feedback</CardTitle></CardHeader>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+    </Card>
+  );
+}
+
+function DocumentsTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useJobDocuments(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load documents" />;
+  return (
+    <Card>
+      <CardHeader><CardTitle>Job Documents</CardTitle></CardHeader>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+    </Card>
+  );
+}
+
+function HistoryTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useJobHistory(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load history" />;
+  return (
+    <Card>
+      <CardHeader><CardTitle>Search Sessions (Ranking History)</CardTitle></CardHeader>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+    </Card>
+  );
+}
 
 export default function JobDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const jobId = resolvedParams.id;
-  const router = useRouter();
+
+  const { data: job, isLoading, isError, refetch } = useJobDetails(jobId);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <Skeleton className="h-20 w-3/4" />
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
+  }
+
+  if (isError || !job) {
+    return <ErrorState 
+      title="Job not found"
+      message="We could not retrieve the details for this job requirement."
+      onRetry={() => refetch()}
+    />;
+  }
 
   return (
     <div className="space-y-6">
@@ -23,86 +144,111 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
         </Link>
         <div className="flex-1 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Senior React Engineer</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{job.title}</h1>
             <p className="text-muted-foreground mt-1 flex items-center space-x-2">
-              <span>Job ID: {jobId}</span>
+              <span>{job.department || "General"}</span>
               <span>•</span>
-              <Badge variant="outline" className="text-blue-500 border-blue-500/20 bg-blue-500/10">OPEN</Badge>
+              <span>{job.location || "Remote"}</span>
+              <span>•</span>
+              <span>ID: {jobId.substring(0, 8)}...</span>
+              <span>•</span>
+              <Badge variant="outline" className="text-primary border-primary/20 bg-primary/10">
+                {job.status.replace("_", " ")}
+              </Badge>
             </p>
           </div>
-          <Button onClick={() => router.push(`/jobs/${jobId}/matching`)}>
-            <Play className="w-4 h-4 mr-2" />
-            Run Matching Engine
-          </Button>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Briefcase className="w-5 h-5 text-muted-foreground" />
-              <span>Job Description</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">Looking for an experienced React engineer to lead our frontend architecture transition to Next.js App Router.</p>
-            <div className="flex flex-wrap gap-2">
-              <Badge>React</Badge>
-              <Badge>Next.js</Badge>
-              <Badge>TypeScript</Badge>
-              <Badge>Tailwind</Badge>
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="overview">
+        <TabsList className="mb-4 flex-wrap h-auto">
+          <TabsTrigger value="overview"><Briefcase className="w-4 h-4 mr-2"/> Overview</TabsTrigger>
+          <TabsTrigger value="candidates"><Users className="w-4 h-4 mr-2"/> Candidates</TabsTrigger>
+          <TabsTrigger value="matching"><CheckCircle className="w-4 h-4 mr-2"/> Matching</TabsTrigger>
+          <TabsTrigger value="workflow"><Settings className="w-4 h-4 mr-2"/> Workflow</TabsTrigger>
+          <TabsTrigger value="analytics"><BarChart3 className="w-4 h-4 mr-2"/> Analytics</TabsTrigger>
+          <TabsTrigger value="feedback"><History className="w-4 h-4 mr-2"/> Feedback</TabsTrigger>
+          <TabsTrigger value="documents"><FileText className="w-4 h-4 mr-2"/> Documents</TabsTrigger>
+          <TabsTrigger value="history"><History className="w-4 h-4 mr-2"/> History</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Network className="w-5 h-5 text-muted-foreground" />
-              <span>Embedding Metadata</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between items-center text-sm border-b pb-2">
-              <span className="text-muted-foreground">Model</span>
-              <span>text-embedding-3-small</span>
-            </div>
-            <div className="flex justify-between items-center text-sm border-b pb-2">
-              <span className="text-muted-foreground">Vector Dimensions</span>
-              <span>1536</span>
-            </div>
-            <div className="flex justify-between items-center text-sm pb-2">
-              <span className="text-muted-foreground">Generated At</span>
-              <span>Oct 24, 2026</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Briefcase className="w-5 h-5 text-muted-foreground" />
+                  <span>Job Description</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm whitespace-pre-wrap">{job.description}</p>
+                {job.experience_required && (
+                  <div className="mt-4 border-t pt-4">
+                    <h4 className="text-sm font-semibold mb-2">Experience Required</h4>
+                    <p className="text-sm text-muted-foreground">{job.experience_required}</p>
+                  </div>
+                )}
+                {job.skills_required && job.skills_required.length > 0 && (
+                  <div className="mt-4 border-t pt-4">
+                    <h4 className="text-sm font-semibold mb-2">Required Skills</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {job.skills_required.map(skill => (
+                        <Badge key={skill}>{skill}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <History className="w-5 h-5 text-muted-foreground" />
-            <span>Search Sessions (Ranking History)</span>
-          </CardTitle>
-          <CardDescription>Previous AI matching runs and their recruiter feedback conversion.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="p-4 border rounded-md flex justify-between items-center">
-              <div>
-                <p className="font-medium text-sm">Session ID: 9f82d...e12a</p>
-                <p className="text-xs text-muted-foreground">Run on Oct 25, 2026 • 142 Candidates Matched</p>
-              </div>
-              <div className="flex space-x-2">
-                <Badge variant="secondary">3 Approved</Badge>
-                <Badge variant="secondary">1 Shortlisted</Badge>
-              </div>
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Network className="w-5 h-5 text-muted-foreground" />
+                  <span>Hiring Context</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex justify-between items-center text-sm border-b pb-2">
+                  <span className="text-muted-foreground">Hiring Manager</span>
+                  <span className="font-medium">{job.hiring_manager || "Unassigned"}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm border-b pb-2">
+                  <span className="text-muted-foreground">Employment Type</span>
+                  <span className="font-medium">{job.employment_type || "Full-time"}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm pb-2">
+                  <span className="text-muted-foreground">Created At</span>
+                  <span className="font-medium">{new Date(job.created_at).toLocaleDateString()}</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+
+        <TabsContent value="candidates">
+          <CandidatesTab id={jobId} />
+        </TabsContent>
+        <TabsContent value="matching">
+          <MatchingTab id={jobId} />
+        </TabsContent>
+        <TabsContent value="workflow">
+          <WorkflowTab id={jobId} />
+        </TabsContent>
+        <TabsContent value="analytics">
+          <AnalyticsTab id={jobId} />
+        </TabsContent>
+        <TabsContent value="feedback">
+          <FeedbackTab id={jobId} />
+        </TabsContent>
+        <TabsContent value="documents">
+          <DocumentsTab id={jobId} />
+        </TabsContent>
+        <TabsContent value="history">
+          <HistoryTab id={jobId} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

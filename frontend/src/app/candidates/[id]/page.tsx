@@ -4,13 +4,146 @@ import { use } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Brain, FileText, CheckCircle2, History, Network, ArrowLeft, Star, FileQuestion } from "lucide-react";
+import { Brain, FileText, CheckCircle2, History, Network, ArrowLeft, Star, FileQuestion, Activity, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { 
+  useCandidateDetails, 
+  useCandidateWorkflow,
+  useCandidateEvaluation,
+  useCandidateEmbeddings,
+  useCandidateMatches,
+  useCandidateFeedback,
+  useCandidateMemory,
+  useCandidateDocuments
+} from "@/hooks/useCandidates";
+import { ErrorState } from "@/components/ui/error-state";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Isolated Tab Components for Lazy Loading
+
+function WorkflowTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useCandidateWorkflow(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load workflow data" />;
+  return (
+    <Card>
+      <CardHeader><CardTitle>Workflow Execution</CardTitle></CardHeader>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+    </Card>
+  );
+}
+
+function EvaluationTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useCandidateEvaluation(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load evaluation data" />;
+  return (
+    <Card>
+      <CardHeader><CardTitle>AI Evaluation</CardTitle></CardHeader>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+    </Card>
+  );
+}
+
+function EmbeddingsTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useCandidateEmbeddings(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load embeddings data" />;
+  return (
+    <Card>
+      <CardHeader><CardTitle>Vector Embeddings</CardTitle></CardHeader>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+    </Card>
+  );
+}
+
+function MatchingTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useCandidateMatches(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load matches" />;
+  return (
+    <Card>
+      <CardHeader><CardTitle>Match History</CardTitle></CardHeader>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+    </Card>
+  );
+}
+
+function FeedbackTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useCandidateFeedback(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load feedback" />;
+  return (
+    <Card>
+      <CardHeader><CardTitle>Recruiter Feedback</CardTitle></CardHeader>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+    </Card>
+  );
+}
+
+function MemoryTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useCandidateMemory(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load memory" />;
+  return (
+    <Card>
+      <CardHeader><CardTitle>Memory & Ground Truth</CardTitle></CardHeader>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+    </Card>
+  );
+}
+
+function DocumentsTab({ id }: { id: string }) {
+  const { data, isLoading, isError } = useCandidateDocuments(id);
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  if (isError) return <ErrorState title="Failed to load documents" />;
+  return (
+    <Card>
+      <CardHeader><CardTitle>Source Documents</CardTitle></CardHeader>
+      <CardContent>
+        {data && data.length > 0 ? (
+          <ul className="space-y-2">
+            {data.map((doc: any) => (
+              <li key={doc.id} className="text-sm border p-3 rounded-md flex justify-between items-center">
+                <span>{doc.original_name}</span>
+                <Badge variant="outline">{doc.file_type}</Badge>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">No documents found.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function CandidateDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const candidateId = resolvedParams.id;
+
+  const { data: details, isLoading, isError, refetch } = useCandidateDetails(candidateId);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <Skeleton className="h-20 w-3/4" />
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
+  }
+
+  if (isError || !details) {
+    return <ErrorState 
+      title="Candidate not found"
+      message="We could not retrieve the details for this candidate."
+      onRetry={() => refetch()}
+    />;
+  }
+
+  const { profile, skills, experience, education, projects } = details;
+  const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown Candidate';
 
   return (
     <div className="space-y-6">
@@ -21,26 +154,29 @@ export default function CandidateDetailsPage({ params }: { params: Promise<{ id:
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">John Doe</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{fullName}</h1>
           <p className="text-muted-foreground mt-1 flex items-center space-x-2">
-            <span>Senior Software Engineer</span>
+            <span>{experience.length > 0 ? experience[0].title : "Candidate"}</span>
             <span>•</span>
-            <span>Candidate ID: {candidateId}</span>
+            <span>ID: {candidateId.substring(0, 8)}...</span>
             <span>•</span>
-            <Badge variant="outline" className="text-green-500 border-green-500/20 bg-green-500/10">HIRED</Badge>
+            <Badge variant="outline" className="text-primary border-primary/20 bg-primary/10">
+              {profile.status.replace("_", " ")}
+            </Badge>
           </p>
         </div>
       </div>
 
       <Tabs defaultValue="profile">
-        <TabsList className="mb-4">
+        <TabsList className="mb-4 flex-wrap h-auto">
           <TabsTrigger value="profile"><FileText className="w-4 h-4 mr-2"/> Profile</TabsTrigger>
-          <TabsTrigger value="extraction"><Brain className="w-4 h-4 mr-2"/> Extraction</TabsTrigger>
+          <TabsTrigger value="documents"><FileText className="w-4 h-4 mr-2"/> Documents</TabsTrigger>
+          <TabsTrigger value="workflow"><Activity className="w-4 h-4 mr-2"/> Workflow</TabsTrigger>
           <TabsTrigger value="evaluation"><Star className="w-4 h-4 mr-2"/> Evaluation</TabsTrigger>
           <TabsTrigger value="embeddings"><Network className="w-4 h-4 mr-2"/> Embeddings</TabsTrigger>
-          <TabsTrigger value="matching"><CheckCircle2 className="w-4 h-4 mr-2"/> Matching History</TabsTrigger>
+          <TabsTrigger value="matching"><CheckCircle2 className="w-4 h-4 mr-2"/> Matches</TabsTrigger>
           <TabsTrigger value="feedback"><FileQuestion className="w-4 h-4 mr-2"/> Feedback</TabsTrigger>
-          <TabsTrigger value="timeline"><History className="w-4 h-4 mr-2"/> Ground Truth</TabsTrigger>
+          <TabsTrigger value="memory"><History className="w-4 h-4 mr-2"/> Memory</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
@@ -49,23 +185,25 @@ export default function CandidateDetailsPage({ params }: { params: Promise<{ id:
               <CardTitle>Professional Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Experienced software engineer with a focus on React, Node.js, and Python. Proven track record of scaling high-traffic applications.</p>
+              <p className="text-sm whitespace-pre-wrap">{profile.summary || "No summary available."}</p>
             </CardContent>
           </Card>
           
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Skills</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  <Badge>React</Badge>
-                  <Badge>TypeScript</Badge>
-                  <Badge>Python</Badge>
-                  <Badge>AWS</Badge>
-                  <Badge>PostgreSQL</Badge>
-                </div>
+                {skills.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {skills.map(s => (
+                      <Badge key={s.id}>{s.name} {s.proficiency && `(${s.proficiency})`}</Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No skills extracted.</p>
+                )}
               </CardContent>
             </Card>
 
@@ -74,89 +212,78 @@ export default function CandidateDetailsPage({ params }: { params: Promise<{ id:
                 <CardTitle>Experience</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-semibold">Senior Engineer at TechCorp</h4>
-                  <p className="text-xs text-muted-foreground">2020 - Present</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold">Engineer at WebSys</h4>
-                  <p className="text-xs text-muted-foreground">2018 - 2020</p>
-                </div>
+                {experience.length > 0 ? experience.map(e => (
+                  <div key={e.id} className="border-b last:border-0 pb-3 last:pb-0">
+                    <h4 className="text-sm font-semibold">{e.title} at {e.company}</h4>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {e.start_date ? new Date(e.start_date).getFullYear() : 'Unknown'} - 
+                      {e.end_date ? new Date(e.end_date).getFullYear() : ' Present'}
+                    </p>
+                    {e.description && <p className="text-xs line-clamp-2">{e.description}</p>}
+                  </div>
+                )) : (
+                  <p className="text-sm text-muted-foreground">No experience listed.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Education</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {education.length > 0 ? education.map(e => (
+                  <div key={e.id} className="border-b last:border-0 pb-3 last:pb-0">
+                    <h4 className="text-sm font-semibold">{e.degree || 'Degree'} at {e.institution}</h4>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {e.start_date ? new Date(e.start_date).getFullYear() : 'Unknown'} - 
+                      {e.end_date ? new Date(e.end_date).getFullYear() : ' Unknown'}
+                    </p>
+                  </div>
+                )) : (
+                  <p className="text-sm text-muted-foreground">No education listed.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Projects</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {projects.length > 0 ? projects.map(p => (
+                  <div key={p.id} className="border-b last:border-0 pb-3 last:pb-0">
+                    <h4 className="text-sm font-semibold">{p.name}</h4>
+                    {p.description && <p className="text-xs mt-1">{p.description}</p>}
+                  </div>
+                )) : (
+                  <p className="text-sm text-muted-foreground">No projects listed.</p>
+                )}
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="extraction">
-          <Card>
-            <CardHeader>
-              <CardTitle>AI Extraction Metadata</CardTitle>
-              <CardDescription>Raw JSON extracted by the pipeline.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <pre className="bg-muted p-4 rounded-md text-xs font-mono">
-                {JSON.stringify({ "model": "gpt-4o", "confidence": 0.98, "tokens_used": 1450 }, null, 2)}
-              </pre>
-            </CardContent>
-          </Card>
+        <TabsContent value="documents">
+          <DocumentsTab id={candidateId} />
         </TabsContent>
-
+        <TabsContent value="workflow">
+          <WorkflowTab id={candidateId} />
+        </TabsContent>
         <TabsContent value="evaluation">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Quality Evaluation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Overall Profile Quality: 95%</p>
-            </CardContent>
-          </Card>
+          <EvaluationTab id={candidateId} />
         </TabsContent>
-
         <TabsContent value="embeddings">
-          <Card>
-            <CardHeader>
-              <CardTitle>Vector Embeddings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Generated using: text-embedding-3-small</p>
-            </CardContent>
-          </Card>
+          <EmbeddingsTab id={candidateId} />
         </TabsContent>
-
         <TabsContent value="matching">
-          <Card>
-            <CardHeader>
-              <CardTitle>Job Match History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Matched against 3 jobs.</p>
-            </CardContent>
-          </Card>
+          <MatchingTab id={candidateId} />
         </TabsContent>
-
         <TabsContent value="feedback">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recruiter Feedback</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Feedback log will appear here.</p>
-            </CardContent>
-          </Card>
+          <FeedbackTab id={candidateId} />
         </TabsContent>
-
-        <TabsContent value="timeline">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ground Truth Timeline</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
-                 {/* Timeline items would go here */}
-                 <p className="text-center text-sm text-muted-foreground relative z-10">Timeline Events Flow</p>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="memory">
+          <MemoryTab id={candidateId} />
         </TabsContent>
       </Tabs>
     </div>

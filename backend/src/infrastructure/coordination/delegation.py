@@ -18,4 +18,4 @@ class DefaultDelegationPlanner(DelegationPlanner):
 class DefaultDelegationEngine(DelegationEngine):
     async def assign_plan(self, plan: DelegationPlan) -> None:
         # Stub logic assigning all tasks to a mocked agent
-        pass
+        raise NotImplementedError("feature_available: false")

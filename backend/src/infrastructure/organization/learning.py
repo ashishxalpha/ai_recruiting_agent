@@ -6,4 +6,4 @@ class DefaultLearningLoop(LearningLoop):
         """
         Triggers Reflection -> Evaluation -> Memory Consolidation & Metrics Update
         """
-        pass
+        raise NotImplementedError("feature_available: false")

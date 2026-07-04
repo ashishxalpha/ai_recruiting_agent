@@ -8,15 +8,16 @@ class DefaultContextBuilder(ContextBuilder):
     async def build(self, workflow_id: UUID, overrides: Dict[str, Any] = None) -> ToolExecutionContext:
         overrides = overrides or {}
         
-        # In a real system, we'd fetch actual memory/user/system context from the DB
+        # Pull context from DB based on workflow_id in a full implementation.
+        # For now, we supply empty dictionaries instead of mock values to ensure no mock logic executes.
         return ToolExecutionContext(
             request_id=uuid.uuid4(),
             workflow_id=workflow_id,
             execution_id=uuid.uuid4(),
-            memory_context={"mock": "memory"},
-            user_context={"mock": "user"},
-            system_context={"mock": "system"},
-            permissions=["filesystem.read", "filesystem.write"],
+            memory_context=overrides.get("memory_context", {}),
+            user_context=overrides.get("user_context", {}),
+            system_context=overrides.get("system_context", {}),
+            permissions=overrides.get("permissions", []),
             budget=ExecutionBudget(max_cost=1.0, max_tokens=10000, max_tool_calls=5, timeout=60),
-            **overrides
+            **{k: v for k, v in overrides.items() if k not in ["memory_context", "user_context", "system_context", "permissions"]}
         )

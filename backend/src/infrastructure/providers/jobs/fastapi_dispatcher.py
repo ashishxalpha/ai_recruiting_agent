@@ -23,12 +23,8 @@ class FastAPIJobDispatcher(JobDispatcher):
             job_id = uuid.UUID(job_id_str)
             self.background_tasks.add_task(self._run_extraction_task, job_id)
         else:
-            self.background_tasks.add_task(self._dummy_task, job_name, payload)
+            logger.error(f"Unknown job dispatched or missing job_id: {job_name}")
+            raise ValueError(f"Unknown job type: {job_name}")
             
     async def _run_extraction_task(self, job_id: uuid.UUID):
         await execute_resume_extraction_job(job_id)
-        
-    async def _dummy_task(self, job_name: str, payload: dict):
-        # A dummy simulation of job processing
-        await asyncio.sleep(1)
-        logger.info(f"Completed dummy processing for job {job_name}")

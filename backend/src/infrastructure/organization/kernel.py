@@ -13,7 +13,7 @@ class DefaultAIKernel(AIKernel):
         self.policy_engine = None
 
     async def execute_task(self, task: Dict[str, Any]) -> Any:
-        pass
+        raise NotImplementedError("feature_available: false")
 
     async def validate_policy(self, policy: OrganizationPolicy) -> bool:
         return True

@@ -1,6 +1,6 @@
 import asyncio
 import json
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
 from src.infrastructure.events.event_bus import EventBus

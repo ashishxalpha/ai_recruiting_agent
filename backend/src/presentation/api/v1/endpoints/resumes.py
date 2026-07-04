@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter
+from src.presentation.api.dependencies.auth import get_current_user
+from src.infrastructure.database.models import UserModel
+, Depends, UploadFile, File, HTTPException, status
 from pydantic import BaseModel
 from typing import Dict, Any
 
@@ -22,7 +25,7 @@ ALLOWED_MIME_TYPES = [
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 @router.post("/upload", response_model=UploadResponse, status_code=status.HTTP_202_ACCEPTED)
-async def upload_resume(
+async def upload_resume(current_user: UserModel = Depends(get_current_user), 
     file: UploadFile = File(...),
     upload_service: ResumeUploadService = Depends(get_resume_upload_service)
 ):

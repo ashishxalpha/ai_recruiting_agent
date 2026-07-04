@@ -21,7 +21,7 @@ class InMemoryAgentMailbox(AgentMailbox):
         return None
 
     async def archive(self, message_id: UUID) -> None:
-        pass
+        raise NotImplementedError("feature_available: false")
 
     async def get_messages(self) -> List[AgentMessage]:
         return list(self.model.messages)

@@ -29,8 +29,11 @@ async def test_local_storage_provider(tmp_path):
 
 @pytest.mark.asyncio
 async def test_fastapi_job_dispatcher():
-    background_tasks = MagicMock()
-    dispatcher = FastAPIJobDispatcher(background_tasks)
+    from src.infrastructure.providers.jobs.fastapi_dispatcher import FastAPIJobDispatcher
+    from fastapi import BackgroundTasks
     
-    await dispatcher.dispatch("test_job", {"id": "123"})
-    background_tasks.add_task.assert_called_once_with(dispatcher._dummy_task, "test_job", {"id": "123"})
+    bg_tasks = BackgroundTasks()
+    dispatcher = FastAPIJobDispatcher(background_tasks=bg_tasks)
+    
+    with pytest.raises(ValueError, match="Unknown job type: test_job"):
+        await dispatcher.dispatch("test_job", {"foo": "bar"})

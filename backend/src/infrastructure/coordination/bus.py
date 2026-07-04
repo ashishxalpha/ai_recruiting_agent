@@ -8,7 +8,7 @@ class InMemoryCommunicationBus(AgentCommunicationBus):
         self._topics: Dict[str, List[callable]] = {}
 
     async def send(self, message: AgentMessage) -> None:
-        pass
+        raise NotImplementedError("feature_available: false")
 
     async def publish(self, topic: str, message: AgentMessage) -> None:
         if topic in self._topics:
@@ -16,10 +16,10 @@ class InMemoryCommunicationBus(AgentCommunicationBus):
                 await handler(message)
 
     async def broadcast(self, message: AgentMessage) -> None:
-        pass
+        raise NotImplementedError("feature_available: false")
 
     async def reply(self, original_id: UUID, message: AgentMessage) -> None:
-        pass
+        raise NotImplementedError("feature_available: false")
 
     async def subscribe(self, topic: str, handler: callable) -> None:
         if topic not in self._topics:

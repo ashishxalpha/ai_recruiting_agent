@@ -59,3 +59,36 @@ def get_candidate_service(session: AsyncSession = fastapi.Depends(get_db_session
         candidate_repo=SQLAlchemyCandidateRepository(session),
         document_repo=SQLAlchemyCandidateDocumentRepository(session)
     )
+
+def get_workflow_engine(session: AsyncSession = fastapi.Depends(get_db_session)):
+    from src.application.workflows.workflow_registry import InMemoryWorkflowDefinitionRegistry
+    from src.infrastructure.workflows.langgraph_engine import LangGraphWorkflowEngine
+    from src.infrastructure.workflows.checkpoints.database import DatabaseCheckpointStore
+    
+    registry = InMemoryWorkflowDefinitionRegistry()
+    
+    # We mock the node registry for Phase 2
+    class MockNodeRegistry:
+        def get_node(self, node_name: str):
+            from src.application.workflows.interfaces import WorkflowNode, NodeRetryPolicy
+            from src.application.workflows.state import RecruitingWorkflowState
+            
+            class MockNode(WorkflowNode):
+                @property
+                def retry_policy(self):
+                    return None
+                async def execute(self, state: RecruitingWorkflowState) -> RecruitingWorkflowState:
+                    return state
+                async def rollback(self, state: RecruitingWorkflowState) -> RecruitingWorkflowState:
+                    return state
+                    
+            return MockNode()
+            
+        def register_node(self, node_name: str, node):
+            pass
+            
+    from src.infrastructure.workflows.definitions.recruiting import RecruitingLangGraphDefinition
+    registry.register(RecruitingLangGraphDefinition(MockNodeRegistry()))
+    
+    checkpointer = DatabaseCheckpointStore(session)
+    return LangGraphWorkflowEngine(registry, checkpointer, session)

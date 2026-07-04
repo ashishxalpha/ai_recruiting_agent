@@ -26,14 +26,8 @@ class MCPToolProvider(ToolProvider):
 
     async def execute(self, tool_id: str, arguments: Dict[str, Any], context: ToolExecutionContext) -> ToolExecutionResult:
         start_time = time.time()
-        # Mock execution payload for MCP SDK
-        return ToolExecutionResult(
-            success=True,
-            result={"mock": "data from MCP"},
-            execution_time=time.time() - start_time,
-            provider=self._provider_id,
-            tool_name=tool_id
-        )
+        # MCP SDK integration is deferred for the future
+        raise NotImplementedError("feature_available: false")
 
     async def health(self) -> str:
         return "healthy" if self._connected else "offline"

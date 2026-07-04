@@ -1,9 +1,22 @@
-from typing import Protocol, Any, Dict, List
+from __future__ import annotations
+from typing import Protocol, Any, Dict, List, Optional
 from uuid import UUID
 from src.application.workflows.state import RecruitingWorkflowState
 
+class NodeRetryPolicy(Protocol):
+    """Defines retry behavior for a specific node."""
+    max_attempts: int
+    backoff_multiplier: float
+    retry_on_exceptions: List[type[Exception]]
+
 class WorkflowNode(Protocol):
     """A generic node inside a workflow definition."""
+    
+    @property
+    def retry_policy(self) -> Optional[NodeRetryPolicy]:
+        """Optionally returns a retry policy for this node."""
+        return None
+        
     async def execute(self, state: RecruitingWorkflowState) -> RecruitingWorkflowState:
         """Executes the business logic of the node."""
         ...
@@ -16,9 +29,29 @@ class WorkflowDefinition(Protocol):
     """Defines the graph layout and logic for a workflow."""
     name: str
     version: str
+    configuration: Dict[str, Any]
+    supported_states: List[str]
+    required_capabilities: List[str]
     
     def compile(self, checkpointer: CheckpointStore = None) -> Any:
         """Compiles definition into executable format (e.g. LangGraph CompiledGraph)."""
+        ...
+
+class WorkflowDefinitionRegistry(Protocol):
+    """Registry for managing versioned workflow definitions."""
+    def register(self, definition: WorkflowDefinition) -> None:
+        ...
+        
+    def get(self, name: str, version: Optional[str] = None) -> WorkflowDefinition:
+        ...
+        
+    def list(self) -> List[WorkflowDefinition]:
+        ...
+        
+    def exists(self, name: str, version: Optional[str] = None) -> bool:
+        ...
+        
+    def latest_version(self, name: str) -> Optional[str]:
         ...
 
 class NodeRegistry(Protocol):
@@ -35,10 +68,21 @@ class CheckpointStore(Protocol):
     # Actual implementation methods depend on the underlying engine needs, 
     # but the application interacts with it opaquely.
 
+class WorkflowExecutionRecord(Protocol):
+    """Record of a workflow execution run."""
+    id: UUID
+    workflow_name: str
+    workflow_version: str
+    thread_id: str
+    status: str
+    current_node: Optional[str]
+    current_checkpoint_id: Optional[str]
+    retry_count: int
+
 class WorkflowEngine(Protocol):
     """Orchestrates execution of workflows without exposing underlying engine (e.g. LangGraph)."""
     
-    async def execute(self, definition_name: str, state: RecruitingWorkflowState, config: Dict[str, Any] = None) -> RecruitingWorkflowState:
+    async def execute(self, definition_name: str, state: RecruitingWorkflowState, config: Dict[str, Any] = None, version: Optional[str] = None) -> RecruitingWorkflowState:
         """Starts or continues a workflow."""
         ...
         

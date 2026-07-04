@@ -6,13 +6,13 @@ class DefaultCoordinationRuntime(CoordinationRuntime):
         return CoordinationSession(status=CoordinationLifecycle.RUNNING)
 
     async def pause(self) -> None:
-        pass
+        raise NotImplementedError("feature_available: false")
 
     async def resume(self) -> None:
-        pass
+        raise NotImplementedError("feature_available: false")
 
     async def cancel(self) -> None:
-        pass
+        raise NotImplementedError("feature_available: false")
 
     async def status(self) -> str:
         return "RUNNING"

@@ -39,3 +39,30 @@ class AgentReflectionCreated(BaseAgentEvent):
 class AgentActionExecuted(BaseAgentEvent):
     action: AgentAction
     success: bool
+
+class PlanCreated(BaseAgentEvent):
+    selected_tool: str | None = None
+    tool_input: dict | None = None
+    stop: bool = False
+
+class ToolSelected(BaseAgentEvent):
+    tool_name: str
+
+class ToolStarted(BaseAgentEvent):
+    tool_name: str
+    tool_input: dict
+
+class ToolCompleted(BaseAgentEvent):
+    tool_name: str
+    latency_ms: float
+
+class MemoryRetrieved(BaseAgentEvent):
+    policy: str
+    memory_count: int
+
+class MemoryStored(BaseAgentEvent):
+    candidates_saved: int
+
+class AgentCompleted(BaseAgentEvent):
+    success: bool
+    final_output: str | None = None

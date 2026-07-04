@@ -3,7 +3,7 @@ from uuid import UUID
 from src.domain.memory_models import BaseMemory, WorkingMemory
 from src.domain.knowledge_models import KnowledgeRecord
 
-class MemoryRepository(Protocol):
+class MemoryMetadataRepository(Protocol):
     async def save(self, memory: BaseMemory) -> BaseMemory:
         ...
         
@@ -14,6 +14,16 @@ class MemoryRepository(Protocol):
         ...
         
     async def search(self, query: str, filters: Dict[str, Any], limit: int) -> List[BaseMemory]:
+        ...
+
+class MemoryVectorRepository(Protocol):
+    async def upsert_embedding(self, memory_id: UUID, embedding: List[float], model: str, version: str, content_hash: str) -> None:
+        ...
+        
+    async def delete_embedding(self, memory_id: UUID) -> None:
+        ...
+        
+    async def search(self, query_embedding: List[float], filters: Dict[str, Any], limit: int) -> List[UUID]:
         ...
 
 class WorkingMemoryStore(Protocol):

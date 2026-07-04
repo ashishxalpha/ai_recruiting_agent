@@ -16,6 +16,5 @@ class OutcomeAnalyticsJob:
     async def execute(self, job_id: uuid.UUID) -> None:
         with tracer.start_as_current_span("OutcomeAnalyticsJob.execute"):
             logger.info(f"Starting execution for OutcomeAnalyticsJob: {job_id}")
-            # Placeholder for future logic
-            # e.g., fetching all events, generating metrics, updating analytics tables
-            pass
+            # OLAP analytics materialization is a future capability
+            raise NotImplementedError("feature_available: false")
