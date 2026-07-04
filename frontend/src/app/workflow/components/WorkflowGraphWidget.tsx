@@ -1,8 +1,8 @@
 import { Network } from "lucide-react";
 import { useWorkflowGraph } from "@/hooks/useWorkflow";
 import { WorkflowWidgetWrapper } from "./WorkflowWidgetWrapper";
-import ReactFlow, { Background, Controls } from "reactflow";
-import "reactflow/dist/style.css";
+import { ReactFlow, Background, Controls } from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 
 export function WorkflowGraphWidget({ workflowId }: { workflowId: string }) {
   const { data, isLoading, isError } = useWorkflowGraph(workflowId);

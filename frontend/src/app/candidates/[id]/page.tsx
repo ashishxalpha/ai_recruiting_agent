@@ -102,7 +102,7 @@ function DocumentsTab({ id }: { id: string }) {
     <Card>
       <CardHeader><CardTitle>Source Documents</CardTitle></CardHeader>
       <CardContent>
-        {data && data.length > 0 ? (
+        {Array.isArray(data) && data.length > 0 ? (
           <ul className="space-y-2">
             {data.map((doc: any) => (
               <li key={doc.id} className="text-sm border p-3 rounded-md flex justify-between items-center">

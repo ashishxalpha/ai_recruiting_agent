@@ -1,8 +1,8 @@
 import { Network } from "lucide-react";
 import { useMemoryGraph } from "@/hooks/useMemory";
 import { MemoryWidgetWrapper } from "./MemoryWidgetWrapper";
-import ReactFlow, { Background, Controls } from "reactflow";
-import "reactflow/dist/style.css";
+import { ReactFlow, Background, Controls } from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 
 export function MemoryGraphWidget() {
   const { data, isLoading, isError } = useMemoryGraph();

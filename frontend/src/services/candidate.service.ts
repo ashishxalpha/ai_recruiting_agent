@@ -22,7 +22,7 @@ export class CandidateService {
     const response = await apiClient.get('/candidates', { params });
     // In production with PaginatedResponse, we can parse `items` with z.array() if needed,
     // or assume the generic pagination response is valid.
-    return response as CandidateListResponse;
+    return response as unknown as CandidateListResponse;
   }
 
   /**

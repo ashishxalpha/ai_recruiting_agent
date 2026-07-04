@@ -25,7 +25,7 @@ export class JobService {
     const response = await apiClient.get('/jobs', { params });
     // In production with PaginatedResponse, we can parse `items` with z.array() if needed,
     // or assume the generic pagination response is valid from the API Client interceptors.
-    return response as JobListResponse;
+    return response as unknown as JobListResponse;
   }
 
   /**
