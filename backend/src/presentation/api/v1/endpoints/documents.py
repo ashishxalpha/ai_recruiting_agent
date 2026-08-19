@@ -4,7 +4,7 @@ from uuid import UUID
 from typing import Any
 
 from src.application.services.document_service import DocumentService
-from src.presentation.api.dependencies import get_document_service
+from src.presentation.api.dependencies import get_document_service, get_db_session
 from src.observability.tracing import get_tracer
 
 router = APIRouter()
@@ -24,13 +24,31 @@ async def get_document_metadata(
 @router.get("/{id}/status")
 async def get_document_status(
     id: UUID,
-    service: DocumentService = Depends(get_document_service)
+    service: DocumentService = Depends(get_document_service),
+    db: Any = Depends(get_db_session)
 ) -> Any:
     with tracer.start_as_current_span("API.GET./api/v1/documents/{id}/status"):
         status = await service.get_document_status(id)
         if not status:
             raise HTTPException(status_code=404, detail="Ingestion status not found")
-        return status
+        
+        # Check actual background job status
+        job = None
+        if status.job_id:
+            from sqlalchemy import select
+            from src.infrastructure.database.models import BackgroundJobModel
+            from src.domain.enums import JobStatus
+            result = await db.execute(select(BackgroundJobModel).where(BackgroundJobModel.id == status.job_id))
+            job = result.scalar_one_or_none()
+            if job:
+                status.status = job.status
+                
+        # We can append error_message to the dict if it's failed
+        response_data = status.model_dump()
+        if status.status == JobStatus.FAILED and job and job.error_message:
+            response_data["error_message"] = job.error_message
+            
+        return response_data
 
 @router.get("/{id}/download")
 async def download_document(

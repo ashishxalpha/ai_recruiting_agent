@@ -12,37 +12,37 @@ import {
 
 export const WorkflowService = {
   async getSummary(id: string): Promise<WorkflowResponse<WorkflowSummaryData>> {
-    const { data } = await apiClient.get<WorkflowResponse<WorkflowSummaryData>>(`/api/v1/workflows/${id}`);
-    return data;
+    const response = await apiClient.get<any, WorkflowResponse<WorkflowSummaryData>>(`/api/v1/workflows/${id}`);
+    return response;
   },
 
   async getTimeline(id: string): Promise<WorkflowResponse<WorkflowTimelineData>> {
-    const { data } = await apiClient.get<WorkflowResponse<WorkflowTimelineData>>(`/api/v1/workflows/${id}/timeline`);
-    return data;
+    const response = await apiClient.get<any, WorkflowResponse<WorkflowTimelineData>>(`/api/v1/workflows/${id}/timeline`);
+    return response;
   },
 
   async getGraph(id: string): Promise<WorkflowResponse<WorkflowGraphData>> {
-    const { data } = await apiClient.get<WorkflowResponse<WorkflowGraphData>>(`/api/v1/workflows/${id}/graph`);
-    return data;
+    const response = await apiClient.get<any, WorkflowResponse<WorkflowGraphData>>(`/api/v1/workflows/${id}/graph`);
+    return response;
   },
 
   async getNodes(id: string): Promise<WorkflowResponse<WorkflowNodeHistoryData>> {
-    const { data } = await apiClient.get<WorkflowResponse<WorkflowNodeHistoryData>>(`/api/v1/workflows/${id}/nodes`);
-    return data;
+    const response = await apiClient.get<any, WorkflowResponse<WorkflowNodeHistoryData>>(`/api/v1/workflows/${id}/nodes`);
+    return response;
   },
 
   async getEvents(id: string): Promise<WorkflowResponse<WorkflowEventListData>> {
-    const { data } = await apiClient.get<WorkflowResponse<WorkflowEventListData>>(`/api/v1/workflows/${id}/events`);
-    return data;
+    const response = await apiClient.get<any, WorkflowResponse<WorkflowEventListData>>(`/api/v1/workflows/${id}/events`);
+    return response;
   },
 
   async getCheckpoints(id: string): Promise<WorkflowResponse<WorkflowCheckpointListData>> {
-    const { data } = await apiClient.get<WorkflowResponse<WorkflowCheckpointListData>>(`/api/v1/workflows/${id}/checkpoints`);
-    return data;
+    const response = await apiClient.get<any, WorkflowResponse<WorkflowCheckpointListData>>(`/api/v1/workflows/${id}/checkpoints`);
+    return response;
   },
 
   async getStatistics(id: string): Promise<WorkflowResponse<WorkflowStatisticsData>> {
-    const { data } = await apiClient.get<WorkflowResponse<WorkflowStatisticsData>>(`/api/v1/workflows/${id}/statistics`);
-    return data;
+    const response = await apiClient.get<any, WorkflowResponse<WorkflowStatisticsData>>(`/api/v1/workflows/${id}/statistics`);
+    return response;
   }
 };

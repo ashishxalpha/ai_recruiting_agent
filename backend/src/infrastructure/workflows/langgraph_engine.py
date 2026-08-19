@@ -105,9 +105,72 @@ class LangGraphWorkflowEngine(WorkflowEngine):
             return await self._run_graph(graph, execution, None, thread_config)
 
     async def _run_graph(self, graph, execution, state, thread_config):
+        from src.infrastructure.database.models import WorkflowNodeExecutionModel, WorkflowEventModel
+        import traceback
+        
         try:
-            # If state is None, we are resuming and don't pass initial state
-            final_state = await graph.ainvoke(state, thread_config)
+            node_executions = {}
+            
+            async for event in graph.astream_events(state, config=thread_config, version="v2"):
+                kind = event["event"]
+                name = event["name"]
+                run_id = event["run_id"]
+                node_name = event.get("metadata", {}).get("langgraph_node")
+                
+                if node_name and name == node_name:
+                    if kind == "on_chain_start":
+                        node_exec = WorkflowNodeExecutionModel(
+                            workflow_execution_id=execution.id,
+                            node_id=node_name,
+                            status="RUNNING",
+                            start_time=datetime.utcnow()
+                        )
+                        self.db.add(node_exec)
+                        node_executions[run_id] = node_exec
+                        
+                        evt = WorkflowEventModel(
+                            workflow_execution_id=execution.id,
+                            category="System",
+                            severity="INFO",
+                            message=f"Node '{node_name}' started",
+                            node_id=node_name
+                        )
+                        self.db.add(evt)
+                        
+                    elif kind == "on_chain_end":
+                        node_exec = node_executions.get(run_id)
+                        if node_exec:
+                            node_exec.status = "COMPLETED"
+                            node_exec.end_time = datetime.utcnow()
+                            if node_exec.start_time:
+                                node_exec.duration_ms = (node_exec.end_time - node_exec.start_time).total_seconds() * 1000
+                                
+                        evt = WorkflowEventModel(
+                            workflow_execution_id=execution.id,
+                            category="System",
+                            severity="INFO",
+                            message=f"Node '{node_name}' completed",
+                            node_id=node_name
+                        )
+                        self.db.add(evt)
+                        
+                    elif kind == "on_chain_error":
+                        node_exec = node_executions.get(run_id)
+                        if node_exec:
+                            node_exec.status = "FAILED"
+                            node_exec.end_time = datetime.utcnow()
+                            if node_exec.start_time:
+                                node_exec.duration_ms = (node_exec.end_time - node_exec.start_time).total_seconds() * 1000
+                            node_exec.error_message = str(event.get("data", {}).get("error"))
+                            
+                        evt = WorkflowEventModel(
+                            workflow_execution_id=execution.id,
+                            category="System",
+                            severity="ERROR",
+                            message=f"Node '{node_name}' failed: {event.get('data', {}).get('error')}",
+                            node_id=node_name
+                        )
+                        self.db.add(evt)
             
             # Check if it finished or paused
             graph_state = await graph.aget_state(thread_config)
@@ -120,7 +183,7 @@ class LangGraphWorkflowEngine(WorkflowEngine):
                 execution.completed_at = datetime.utcnow()
                 
             await self.db.commit()
-            return final_state
+            return graph_state.values
         except (NodeInterrupt, GraphInterrupt) as e:
             execution.status = "PAUSED"
             # Get next pending node
@@ -128,12 +191,19 @@ class LangGraphWorkflowEngine(WorkflowEngine):
             execution.current_node = graph_state.next[0] if graph_state.next else "unknown"
             await self.db.commit()
             
-            # Return current state up to the interrupt
             return graph_state.values
         except Exception as e:
             execution.status = "FAILED"
             execution.last_error = str(e)
             execution.completed_at = datetime.utcnow()
+            
+            evt = WorkflowEventModel(
+                workflow_execution_id=execution.id,
+                category="System",
+                severity="ERROR",
+                message=f"Workflow failed unexpectedly: {str(e)}\n{traceback.format_exc()}"
+            )
+            self.db.add(evt)
             await self.db.commit()
             raise
 

@@ -52,14 +52,30 @@ async def get_candidate_workflow(id: UUID):
     raise HTTPException(status_code=501, detail="feature_available: false")
 
 @router.get("/{id}/evaluation")
-async def get_candidate_evaluation(id: UUID):
-    # To be implemented
-    raise HTTPException(status_code=501, detail="feature_available: false")
+async def get_candidate_evaluation(id: UUID, db: AsyncSession = Depends(get_db_session)):
+    with tracer.start_as_current_span("API.GET./api/v1/candidates/{id}/evaluation"):
+        from sqlalchemy import select
+        from src.infrastructure.database.models import CandidateMatchModel
+        stmt = select(CandidateMatchModel).where(CandidateMatchModel.candidate_id == id)
+        result = await db.execute(stmt)
+        matches = result.scalars().all()
+        return [{"id": m.id, "job_requirement_id": m.search_session_id, "final_score": m.final_score} for m in matches]
 
 @router.get("/{id}/embeddings")
-async def get_candidate_embeddings(id: UUID):
-    # To be implemented
-    raise HTTPException(status_code=501, detail="feature_available: false")
+async def get_candidate_embeddings(id: UUID, db: AsyncSession = Depends(get_db_session)):
+    with tracer.start_as_current_span("API.GET./api/v1/candidates/{id}/embeddings"):
+        from sqlalchemy import select
+        from src.infrastructure.database.models import CandidateEmbeddingModel
+        stmt = select(CandidateEmbeddingModel).where(CandidateEmbeddingModel.candidate_id == id)
+        result = await db.execute(stmt)
+        embeddings = result.scalars().all()
+        return [{
+            "id": e.id, 
+            "embedding_type": e.embedding_type, 
+            "embedding_model": e.embedding_model,
+            "vector_preview": e.vector_data[:5] if e.vector_data else [],
+            "dimensions": len(e.vector_data) if e.vector_data else 0
+        } for e in embeddings]
 
 @router.get("/{id}/memory")
 async def get_candidate_memory(id: UUID):

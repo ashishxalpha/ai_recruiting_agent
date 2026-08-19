@@ -78,7 +78,7 @@ class ResumeExtractionWorkflow:
                     raise ValueError(f"Document {document_id} not found")
 
                 # 1. Parsing
-                file_bytes = await self.storage_provider.get_file(document.storage_key)
+                file_bytes = await self.storage_provider.download(document.storage_key)
                 
                 parser: DocumentParser
                 if document.file_type == "application/pdf":
@@ -111,7 +111,7 @@ class ResumeExtractionWorkflow:
                     prompt_version="v1",
                     schema_version="v1",
                     raw_ai_response=metrics["raw_response"],
-                    normalized_response=profile.model_dump(),
+                    normalized_response=profile.model_dump(mode="json"),
                     overall_confidence=eval_result.confidence_score,
                     contact_confidence=eval_result.contact_confidence,
                     education_confidence=eval_result.education_confidence,
@@ -207,10 +207,21 @@ class ResumeExtractionWorkflow:
 
             except Exception as e:
                 logger.exception(f"Job {job_id} failed with error: {e}")
+                
+                # IMPORTANT: The session might be in a failed state (e.g., from a failed commit)
+                # We must rollback before we can execute any further queries like job_repo.update
+                # To do this cleanly, we'll access the session through one of the repositories
+                if hasattr(self.job_repo, 'session'):
+                    await self.job_repo.session.rollback()
+                    
                 job.status = JobStatus.FAILED
                 job.error_message = str(e)
                 job.completed_at = datetime.utcnow()
-                await self.job_repo.update(job)
+                
+                try:
+                    await self.job_repo.update(job)
+                except Exception as update_e:
+                    logger.error(f"Failed to update job status after failure: {update_e}")
                 
                 # Send to DLQ
                 doc_id = locals().get("document_id")

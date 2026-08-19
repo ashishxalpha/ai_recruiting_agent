@@ -1,7 +1,4 @@
-from fastapi import APIRouter
-from src.presentation.api.dependencies.auth import get_current_user
-from src.infrastructure.database.models import UserModel
-, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, Dict, List
 from uuid import UUID
@@ -28,8 +25,7 @@ def get_memory_query_service(db: AsyncSession = Depends(get_db_session)) -> Memo
 # --- Write Operations (Memory Engine) ---
 
 @router.post("")
-async def create_memory(current_user: UserModel = Depends(get_current_user), 
-    request: Dict[str, Any],
+async def create_memory(request: Dict[str, Any],
     db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     # Delegate to MemoryEngine.store()
@@ -51,8 +47,7 @@ async def delete_memory(
     raise HTTPException(status_code=501, detail="feature_available: false")
 
 @router.post("/consolidate")
-async def trigger_consolidation(current_user: UserModel = Depends(get_current_user), 
-    db: AsyncSession = Depends(get_db_session)
+async def trigger_consolidation(db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     raise HTTPException(status_code=501, detail="feature_available: false")
 
@@ -90,8 +85,7 @@ async def get_memory_consolidations(
     return await service.get_consolidations()
 
 @router.post("/search", response_model=MemoryResponseDTO[MemoryRetrievalDTO])
-async def search_memory(current_user: UserModel = Depends(get_current_user), 
-    request: Dict[str, Any],
+async def search_memory(request: Dict[str, Any],
     service: MemoryQueryService = Depends(get_memory_query_service)
 ):
     """Retrieval Debugger endpoint explaining semantic ranking decisions."""

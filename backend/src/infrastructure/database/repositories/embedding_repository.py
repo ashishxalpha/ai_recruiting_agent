@@ -23,3 +23,22 @@ class CandidateEmbeddingRepository:
         models = [self._to_model(e) for e in embeddings]
         self.session.add_all(models)
         await self.session.flush()
+
+    async def get_by_candidate_id(self, candidate_id: str) -> List[CandidateEmbedding]:
+        from sqlalchemy import select
+        result = await self.session.execute(
+            select(CandidateEmbeddingModel).where(CandidateEmbeddingModel.candidate_id == candidate_id)
+        )
+        models = result.scalars().all()
+        return [
+            CandidateEmbedding(
+                id=m.id,
+                candidate_id=m.candidate_id,
+                embedding_type=m.embedding_type,
+                embedding_model=m.embedding_model,
+                embedding_version=m.embedding_version,
+                source_hash=m.source_hash,
+                vector_data=m.vector_data,
+                generated_at=m.generated_at
+            ) for m in models
+        ]

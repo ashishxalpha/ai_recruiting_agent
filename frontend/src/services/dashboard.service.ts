@@ -8,19 +8,19 @@ import {
 
 export const DashboardService = {
   async getSummary(): Promise<StandardResponse<DashboardSummary>> {
-    const { data } = await apiClient.get<StandardResponse<DashboardSummary>>(`/api/v1/dashboard/summary`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<DashboardSummary>>(`/api/v1/dashboard/summary`);
+    return response;
   },
 
   async getHealth(): Promise<StandardResponse<DashboardHealth>> {
-    const { data } = await apiClient.get<StandardResponse<DashboardHealth>>(`/api/v1/dashboard/health`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<DashboardHealth>>(`/api/v1/dashboard/health`);
+    return response;
   },
 
   async getActivity(limit: number = 20): Promise<StandardResponse<RecentActivity>> {
-    const { data } = await apiClient.get<StandardResponse<RecentActivity>>(`/api/v1/dashboard/activity`, {
+    const response = await apiClient.get<any, StandardResponse<RecentActivity>>(`/api/v1/dashboard/activity`, {
       params: { limit }
     });
-    return data;
+    return response;
   }
 };

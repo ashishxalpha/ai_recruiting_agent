@@ -74,3 +74,20 @@ class SQLAlchemyCandidateDocumentRepository(CandidateDocumentRepository):
                 updated_at=m.updated_at
             ) for m in models
         ]
+
+    async def update(self, document: CandidateDocument) -> CandidateDocument:
+        result = await self.session.execute(
+            select(CandidateDocumentModel).where(CandidateDocumentModel.id == document.id)
+        )
+        model = result.scalar_one_or_none()
+        if model:
+            model.candidate_id = document.candidate_id
+            model.file_path = document.file_path
+            model.file_type = document.file_type
+            model.original_name = document.original_name
+            model.storage_key = document.storage_key
+            model.raw_text = document.raw_text
+            model.extracted_text = document.extracted_text
+            model.updated_at = document.updated_at
+            await self.session.commit()
+        return document

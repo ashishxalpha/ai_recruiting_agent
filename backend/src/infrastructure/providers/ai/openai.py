@@ -54,7 +54,7 @@ class OpenAIExtractionProvider(AIExtractionProvider):
                     "processing_time_ms": processing_time_ms,
                     "model_name": self.model_name,
                     "provider": "openai",
-                    "raw_response": profile.model_dump(), # Storing the parsed output since we used Structured Outputs
+                    "raw_response": __import__('json').loads(raw_json) if raw_json else {}, # Storing the raw output directly
                 }
                 
                 return profile, metrics

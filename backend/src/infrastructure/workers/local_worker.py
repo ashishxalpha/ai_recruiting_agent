@@ -17,9 +17,21 @@ from src.observability.tracing import get_tracer
 tracer = get_tracer(__name__)
 logger = logging.getLogger(__name__)
 
-class DummyDLQProvider(FailedExtractionTrackingProvider):
+from src.infrastructure.database.repositories.audit_repository import SQLAlchemyAuditRepository
+
+class DatabaseDLQProvider(FailedExtractionTrackingProvider):
+    def __init__(self, session):
+        self.session = session
+        
     async def track_failure(self, document_id, error_type, error_message, payload=None):
         logger.error(f"DLQ: Failed extraction for document {document_id}. {error_type}: {error_message}")
+        audit_repo = SQLAlchemyAuditRepository(self.session)
+        await audit_repo.log_action(
+            entity_type="document_extraction_dlq",
+            entity_id=document_id or uuid.uuid4(),
+            action="extraction_failed",
+            changes={"error_type": error_type, "error_message": error_message, "payload": payload}
+        )
         
     async def get_failed_extractions(self, limit=100, offset=0):
         return []
@@ -41,12 +53,13 @@ async def execute_resume_extraction_job(job_id: uuid.UUID):
                 from src.infrastructure.providers.embedding.openai import OpenAIEmbeddingProvider
                 from src.infrastructure.database.repositories.embedding_repository import CandidateEmbeddingRepository
                 
-                from src.infrastructure.config import get_openai_api_key
-                api_key = get_openai_api_key()
-                ai_provider = OpenAIExtractionProvider(api_key=api_key)
-                embedding_provider = OpenAIEmbeddingProvider(api_key=api_key)
+                api_key = os.getenv("OPENAI_API_KEY", "dummy_key")
+                extraction_model = os.getenv("AI_EXTRACTION_MODEL", "gpt-4o-2024-08-06")
+                embedding_model = os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small")
+                ai_provider = OpenAIExtractionProvider(api_key=api_key, model_name=extraction_model)
+                embedding_provider = OpenAIEmbeddingProvider(api_key=api_key, model=embedding_model)
                 
-                dlq_provider = DummyDLQProvider()
+                dlq_provider = DatabaseDLQProvider(session)
                 validator = CandidateProfileValidator()
                 evaluator = ProfileEvaluator()
                 embedding_repo = CandidateEmbeddingRepository(session)

@@ -13,47 +13,47 @@ import {
 
 export const OrganizationService = {
   async getOverview(): Promise<StandardResponse<any>> {
-    const { data } = await apiClient.get<StandardResponse<any>>(`/api/v1/organization`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<any>>(`/api/v1/organization`);
+    return response;
   },
   
   async getGoals(): Promise<StandardResponse<OrganizationGoal[]>> {
-    const { data } = await apiClient.get<StandardResponse<OrganizationGoal[]>>(`/api/v1/organization/goals`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<OrganizationGoal[]>>(`/api/v1/organization/goals`);
+    return response;
   },
 
   async getRoles(): Promise<StandardResponse<OrganizationRole[]>> {
-    const { data } = await apiClient.get<StandardResponse<OrganizationRole[]>>(`/api/v1/organization/roles`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<OrganizationRole[]>>(`/api/v1/organization/roles`);
+    return response;
   },
 
   async getSkills(): Promise<StandardResponse<OrganizationSkill[]>> {
-    const { data } = await apiClient.get<StandardResponse<OrganizationSkill[]>>(`/api/v1/organization/skills`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<OrganizationSkill[]>>(`/api/v1/organization/skills`);
+    return response;
   },
 
   async getExecutions(): Promise<StandardResponse<OrganizationExecution[]>> {
-    const { data } = await apiClient.get<StandardResponse<OrganizationExecution[]>>(`/api/v1/organization/executions`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<OrganizationExecution[]>>(`/api/v1/organization/executions`);
+    return response;
   },
 
   async getPolicies(): Promise<StandardResponse<OrganizationPolicy[]>> {
-    const { data } = await apiClient.get<StandardResponse<OrganizationPolicy[]>>(`/api/v1/organization/policies`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<OrganizationPolicy[]>>(`/api/v1/organization/policies`);
+    return response;
   },
 
   async getLearning(): Promise<StandardResponse<OrganizationLearning[]>> {
-    const { data } = await apiClient.get<StandardResponse<OrganizationLearning[]>>(`/api/v1/organization/learning`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<OrganizationLearning[]>>(`/api/v1/organization/learning`);
+    return response;
   },
 
   async getMetrics(): Promise<StandardResponse<OrganizationMetric[]>> {
-    const { data } = await apiClient.get<StandardResponse<OrganizationMetric[]>>(`/api/v1/organization/metrics`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<OrganizationMetric[]>>(`/api/v1/organization/metrics`);
+    return response;
   },
 
   async getActivity(): Promise<StandardResponse<OrganizationActivity[]>> {
-    const { data } = await apiClient.get<StandardResponse<OrganizationActivity[]>>(`/api/v1/organization/activity`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<OrganizationActivity[]>>(`/api/v1/organization/activity`);
+    return response;
   }
 };

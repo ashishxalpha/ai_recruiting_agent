@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 
 from src.domain.memory_models import BaseMemory
-from src.domain.interfaces.memory_repository import MemoryMetadataRepository, MemoryVectorRepository
+from src.domain.interfaces.memory_repository import MemoryRepository
 
 class RetrievalPolicy(Protocol):
     """Abstraction defining how memories should be ranked/filtered."""
@@ -28,22 +28,6 @@ class HybridRetrievalPolicy(RetrievalPolicy):
     def apply(self, query: str, memories: List[BaseMemory]) -> List[BaseMemory]:
         # Implement dynamic scoring
         return memories
-
-class PlanningPolicy(HybridRetrievalPolicy):
-    def __init__(self):
-        super().__init__(w_sim=0.5, w_rec=0.1, w_imp=0.3, w_conf=0.1, w_dec=0.0)
-
-class ReflectionPolicy(HybridRetrievalPolicy):
-    def __init__(self):
-        super().__init__(w_sim=0.3, w_rec=0.4, w_imp=0.2, w_conf=0.1, w_dec=0.0)
-
-class ToolSelectionPolicy(HybridRetrievalPolicy):
-    def __init__(self):
-        super().__init__(w_sim=0.6, w_rec=0.1, w_imp=0.2, w_conf=0.1, w_dec=0.0)
-
-class ConversationPolicy(HybridRetrievalPolicy):
-    def __init__(self):
-        super().__init__(w_sim=0.4, w_rec=0.4, w_imp=0.1, w_conf=0.1, w_dec=0.0)
 
 class MemoryContext(BaseModel):
     retrieved_memories: List[BaseMemory]
@@ -71,24 +55,16 @@ class MemoryEngine(Protocol):
         ...
 
 class HybridMemoryEngine(MemoryEngine):
-    """
-    Orchestrates MemoryMetadataRepository and MemoryVectorRepository.
-    """
-    def __init__(self, meta_repo: MemoryMetadataRepository, vector_repo: MemoryVectorRepository):
-        self.meta_repo = meta_repo
-        self.vector_repo = vector_repo
+    def __init__(self, repo: MemoryRepository):
+        self.repo = repo
 
     async def store(self, memory: BaseMemory) -> BaseMemory:
-        saved = await self.meta_repo.save(memory)
-        # Emit MemoryCreated event here to trigger background embedding job which will call vector_repo.upsert_embedding
-        import logging
-        logging.getLogger(__name__).info(f"MemoryCreated event emitted for memory_id={saved.id} - Background job will generate and upsert embeddings.")
+        saved = await self.repo.save(memory)
+        # Emit MemoryCreated event here to trigger background embedding job
         return saved
 
     async def retrieve(self, query: str, policy: RetrievalPolicy, filters: Dict[str, Any] = None) -> MemoryContext:
-        # In a real scenario, we'd embed the query, call vector_repo.search(), then meta_repo.get()
-        # For now, we search meta directly to fulfill the interface
-        raw_memories = await self.meta_repo.search(query, filters or {}, limit=100)
+        raw_memories = await self.repo.search(query, filters or {}, limit=100)
         ranked_memories = policy.apply(query, raw_memories)
         
         return MemoryContext(
@@ -100,11 +76,10 @@ class HybridMemoryEngine(MemoryEngine):
         )
 
     async def update(self, memory: BaseMemory) -> BaseMemory:
-        return await self.meta_repo.save(memory)
+        return await self.repo.save(memory)
 
     async def delete(self, memory_id: UUID) -> None:
-        await self.vector_repo.delete_embedding(memory_id)
-        await self.meta_repo.delete(memory_id)
+        await self.repo.delete(memory_id)
 
     async def consolidate(self) -> None:
         pass

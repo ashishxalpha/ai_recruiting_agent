@@ -1,16 +1,14 @@
 from pydantic import BaseModel
-from typing import List, Optional
-from datetime import datetime
 
 class DashboardSummaryDTO(BaseModel):
-    candidates: int = 0
-    jobs: int = 0
-    workflows: int = 0
-    pending_feedback: int = 0
-    running_agents: int = 0
-    active_coordination_sessions: int = 0
-    memory_count: int = 0
-    todays_uploads: int = 0
+    total_candidates: int
+    active_jobs: int
+    active_workflows: int
+    pending_feedback: int
+    running_agents: int
+    active_coordination_sessions: int
+    memory_count: int
+    todays_uploads: int
 
 class DashboardActivityDTO(BaseModel):
     today: int
@@ -18,24 +16,21 @@ class DashboardActivityDTO(BaseModel):
 
 class DashboardHealthStatusDTO(BaseModel):
     status: str
-    message: Optional[str] = None
-    latency_ms: Optional[float] = None
+    message: str
+    latency_ms: float
 
 class DashboardHealthDTO(BaseModel):
-    agents: str
-    tools: str
+    database: DashboardHealthStatusDTO
+    redis: DashboardHealthStatusDTO
+    workflow_engine: DashboardHealthStatusDTO
+    agent_swarm: DashboardHealthStatusDTO
+    memory_engine: DashboardHealthStatusDTO
+    overall_status: str
 
 class DashboardMetricsDTO(BaseModel):
     summary: DashboardSummaryDTO
     activity: DashboardActivityDTO
     health: DashboardHealthDTO
 
-class RecentActivityEntryDTO(BaseModel):
-    event_id: str
-    timestamp: datetime
-    source: str # e.g. "workflow", "agent", "memory", "coordination"
-    description: str
-    metadata: dict
-
 class RecentActivityDTO(BaseModel):
-    activities: List[RecentActivityEntryDTO]
+    activities: list

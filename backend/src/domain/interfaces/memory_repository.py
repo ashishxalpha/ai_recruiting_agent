@@ -40,3 +40,6 @@ class KnowledgeRepository(Protocol):
     """Stub for future knowledge graph expansions"""
     async def save(self, record: KnowledgeRecord) -> KnowledgeRecord:
         ...
+
+class MemoryRepository(Protocol):
+    pass

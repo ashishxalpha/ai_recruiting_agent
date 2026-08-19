@@ -1,7 +1,4 @@
-from fastapi import APIRouter
-from src.presentation.api.dependencies.auth import get_current_user
-from src.infrastructure.database.models import UserModel
-, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, Dict
 from uuid import UUID
@@ -36,8 +33,7 @@ from src.presentation.api.dependencies import get_workflow_engine
 # --- Write Endpoints (Engine Orchestration) ---
 
 @router.post("")
-async def start_workflow(current_user: UserModel = Depends(get_current_user), 
-    request: WorkflowStartRequest,
+async def start_workflow(request: WorkflowStartRequest,
     engine: WorkflowEngine = Depends(get_workflow_engine),
     db: AsyncSession = Depends(get_db_session)
 ) -> Any:
@@ -56,8 +52,7 @@ async def start_workflow(current_user: UserModel = Depends(get_current_user),
     }
 
 @router.post("/{workflow_id}/resume")
-async def resume_workflow(current_user: UserModel = Depends(get_current_user), 
-    workflow_id: UUID,
+async def resume_workflow(workflow_id: UUID,
     request: Dict[str, Any],
     engine: WorkflowEngine = Depends(get_workflow_engine),
     db: AsyncSession = Depends(get_db_session)
@@ -67,8 +62,7 @@ async def resume_workflow(current_user: UserModel = Depends(get_current_user),
     raise HTTPException(status_code=501, detail="feature_available: false")
 
 @router.post("/{workflow_id}/cancel")
-async def cancel_workflow(current_user: UserModel = Depends(get_current_user), 
-    workflow_id: UUID,
+async def cancel_workflow(workflow_id: UUID,
     engine: WorkflowEngine = Depends(get_workflow_engine),
     db: AsyncSession = Depends(get_db_session)
 ) -> Any:

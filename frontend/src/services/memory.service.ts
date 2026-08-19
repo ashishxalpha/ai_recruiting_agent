@@ -13,45 +13,45 @@ import {
 
 export const MemoryService = {
   async list(): Promise<MemoryResponse<MemoryList>> {
-    const { data } = await apiClient.get<MemoryResponse<MemoryList>>(`/api/v1/memory`);
-    return data;
+    const response = await apiClient.get<any, MemoryResponse<MemoryList>>(`/api/v1/memory`);
+    return response;
   },
 
   async getDetails(id: string): Promise<MemoryResponse<MemoryDetails>> {
-    const { data } = await apiClient.get<MemoryResponse<MemoryDetails>>(`/api/v1/memory/${id}`);
-    return data;
+    const response = await apiClient.get<any, MemoryResponse<MemoryDetails>>(`/api/v1/memory/${id}`);
+    return response;
   },
 
   async search(query: string, filters?: Record<string, any>): Promise<MemoryResponse<MemoryRetrieval>> {
-    const { data } = await apiClient.post<MemoryResponse<MemoryRetrieval>>(`/api/v1/memory/search`, {
+    const response = await apiClient.post<any, MemoryResponse<MemoryRetrieval>>(`/api/v1/memory/search`, {
       query,
       filters
     });
-    return data;
+    return response;
   },
 
   async getGraph(): Promise<MemoryResponse<MemoryGraphData>> {
-    const { data } = await apiClient.get<MemoryResponse<MemoryGraphData>>(`/api/v1/memory/graph`);
-    return data;
+    const response = await apiClient.get<any, MemoryResponse<MemoryGraphData>>(`/api/v1/memory/graph`);
+    return response;
   },
 
   async getTimeline(id: string): Promise<MemoryResponse<MemoryTimelineData>> {
-    const { data } = await apiClient.get<MemoryResponse<MemoryTimelineData>>(`/api/v1/memory/${id}/timeline`);
-    return data;
+    const response = await apiClient.get<any, MemoryResponse<MemoryTimelineData>>(`/api/v1/memory/${id}/timeline`);
+    return response;
   },
 
   async getRelationships(id: string): Promise<MemoryResponse<MemoryRelationshipListData>> {
-    const { data } = await apiClient.get<MemoryResponse<MemoryRelationshipListData>>(`/api/v1/memory/${id}/relationships`);
-    return data;
+    const response = await apiClient.get<any, MemoryResponse<MemoryRelationshipListData>>(`/api/v1/memory/${id}/relationships`);
+    return response;
   },
 
   async getConsolidations(): Promise<MemoryResponse<MemoryConsolidationData>> {
-    const { data } = await apiClient.get<MemoryResponse<MemoryConsolidationData>>(`/api/v1/memory/consolidations`);
-    return data;
+    const response = await apiClient.get<any, MemoryResponse<MemoryConsolidationData>>(`/api/v1/memory/consolidations`);
+    return response;
   },
 
   async getStatistics(): Promise<MemoryResponse<MemoryStatistics>> {
-    const { data } = await apiClient.get<MemoryResponse<MemoryStatistics>>(`/api/v1/memory/statistics`);
-    return data;
+    const response = await apiClient.get<any, MemoryResponse<MemoryStatistics>>(`/api/v1/memory/statistics`);
+    return response;
   }
 };

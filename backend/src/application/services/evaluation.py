@@ -49,7 +49,7 @@ class ProfileEvaluator:
             return ProfileEvaluationResult(
                 confidence_score=overall_conf,
                 completeness_score=completeness,
-                quality_score=completeness,
+                quality_score=completeness,  # Placeholder, could integrate an LLM review later
                 warnings=warnings,
                 issues=issues,
                 contact_confidence=contact_score,

@@ -21,7 +21,7 @@ class SQLAlchemyAIExtractionRepository(AIExtractionRepository):
             schema_version=extraction.schema_version,
             raw_ai_response=extraction.raw_ai_response,
             normalized_response=extraction.normalized_response,
-            confidence_score=extraction.confidence_score,
+            overall_confidence=extraction.overall_confidence,
             created_at=extraction.created_at,
             updated_at=extraction.updated_at
         )
@@ -48,7 +48,7 @@ class SQLAlchemyAIExtractionRepository(AIExtractionRepository):
                 schema_version=m.schema_version,
                 raw_ai_response=m.raw_ai_response,
                 normalized_response=m.normalized_response,
-                confidence_score=m.confidence_score,
+                overall_confidence=m.overall_confidence,
                 created_at=m.created_at,
                 updated_at=m.updated_at,
                 deleted_at=m.deleted_at

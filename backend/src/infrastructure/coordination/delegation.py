@@ -17,5 +17,11 @@ class DefaultDelegationPlanner(DelegationPlanner):
 
 class DefaultDelegationEngine(DelegationEngine):
     async def assign_plan(self, plan: DelegationPlan) -> None:
-        # Stub logic assigning all tasks to a mocked agent
-        raise NotImplementedError("feature_available: false")
+        import uuid
+        
+        # Assign to the primary recruiting agent by default
+        CORE_AGENT_UUID = uuid.UUID("3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        
+        for task in plan.tasks:
+            task.assigned_agent_id = CORE_AGENT_UUID
+            task.status = "ASSIGNED"

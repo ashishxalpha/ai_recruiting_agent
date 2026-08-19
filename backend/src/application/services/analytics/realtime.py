@@ -73,23 +73,12 @@ class RealtimeAnalyticsProvider(AnalyticsProvider):
         stmt_avg_score = select(func.avg(CandidateMatchModel.final_score))
         avg_score = await self.session.scalar(stmt_avg_score) or 0.0
 
-        # Avg Processing Time (completed_at - started_at) in seconds
-        from src.infrastructure.database.models import BackgroundJobModel
-        from sqlalchemy import extract
-        
-        # Calculate epoch difference
-        stmt_proc = select(func.avg(
-            extract('epoch', BackgroundJobModel.completed_at) - extract('epoch', BackgroundJobModel.started_at)
-        )).where(BackgroundJobModel.completed_at.is_not(None), BackgroundJobModel.started_at.is_not(None))
-        
-        avg_proc_time = await self.session.scalar(stmt_proc) or 0.0
-
         return {
             "recruiter_agreement_rate": round(agreement_rate, 4),
             "approval_rate": round(approval_rate, 4),
             "interview_rate": round(interview_rate, 4),
             "hire_rate": round(hire_rate, 4),
             "average_match_score": round(avg_score, 4),
-            "average_processing_time": round(avg_proc_time, 2),
-            "average_embedding_latency": 0.0  # Not currently tracked at the embedding level
+            "average_processing_time": 0.0, # Placeholder
+            "average_embedding_latency": 0.0 # Placeholder
         }

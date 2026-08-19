@@ -9,9 +9,6 @@ class RecruitingLangGraphDefinition(WorkflowDefinition):
         self.name = "resume_extraction_workflow"
         self.version = "1.0.0"
         self.registry = node_registry
-        self.configuration = {}
-        self.supported_states = ["RUNNING", "PAUSED", "COMPLETED", "FAILED"]
-        self.required_capabilities = ["document_parsing", "llm_extraction"]
 
     def compile(self, checkpointer: CheckpointStore = None) -> Any:
         workflow = StateGraph(RecruitingWorkflowState)
@@ -31,26 +28,15 @@ class RecruitingLangGraphDefinition(WorkflowDefinition):
             "WorkflowFailedNode"
         ]
 
-        from langgraph.types import RetryPolicy
-
         # Add nodes to graph
         for node_name in nodes:
             node_impl = self.registry.get_node(node_name)
-            if hasattr(node_impl, "retry_policy") and node_impl.retry_policy:
-                pol = node_impl.retry_policy
-                workflow.add_node(node_name, node_impl.execute, retry=RetryPolicy(
-                    initial_interval=pol.backoff_multiplier,
-                    backoff_factor=pol.backoff_multiplier,
-                    max_attempts=pol.max_attempts,
-                    retry_on=lambda exc: type(exc) in pol.retry_on_exceptions
-                ))
-            else:
-                workflow.add_node(node_name, node_impl.execute)
+            workflow.add_node(node_name, node_impl.execute)
 
         # Routing Logic
         workflow.add_edge(START, "UploadValidationNode")
         
-        # Conditional routing based on execution state
+        # Conditional routing based on node state outputs
         def validate_routing(state: RecruitingWorkflowState):
             if state.get("errors"):
                 return "WorkflowFailedNode"

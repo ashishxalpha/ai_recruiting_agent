@@ -9,27 +9,27 @@ import {
 
 export const CoordinationService = {
   async getOverview(): Promise<StandardResponse<any[]>> {
-    const { data } = await apiClient.get<StandardResponse<any[]>>(`/api/v1/coordinator`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<any[]>>(`/api/v1/coordinator`);
+    return response;
   },
 
   async getSessions(): Promise<StandardResponse<CoordinationSession[]>> {
-    const { data } = await apiClient.get<StandardResponse<CoordinationSession[]>>(`/api/v1/coordinator/sessions`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<CoordinationSession[]>>(`/api/v1/coordinator/sessions`);
+    return response;
   },
 
   async getConsensus(): Promise<StandardResponse<CoordinationConsensus[]>> {
-    const { data } = await apiClient.get<StandardResponse<CoordinationConsensus[]>>(`/api/v1/coordinator/consensus`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<CoordinationConsensus[]>>(`/api/v1/coordinator/consensus`);
+    return response;
   },
 
   async getHandoffs(): Promise<StandardResponse<CoordinationHandoff[]>> {
-    const { data } = await apiClient.get<StandardResponse<CoordinationHandoff[]>>(`/api/v1/coordinator/handoffs`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<CoordinationHandoff[]>>(`/api/v1/coordinator/handoffs`);
+    return response;
   },
 
   async getConflicts(): Promise<StandardResponse<CoordinationConflict[]>> {
-    const { data } = await apiClient.get<StandardResponse<CoordinationConflict[]>>(`/api/v1/coordinator/conflicts`);
-    return data;
+    const response = await apiClient.get<any, StandardResponse<CoordinationConflict[]>>(`/api/v1/coordinator/conflicts`);
+    return response;
   }
 };

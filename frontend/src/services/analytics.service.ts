@@ -13,42 +13,42 @@ import {
 
 export const AnalyticsService = {
   async getFunnel(): Promise<AnalyticsResponse<RecruitingFunnelData>> {
-    const { data } = await apiClient.get<AnalyticsResponse<RecruitingFunnelData>>('/api/v1/analytics/funnel');
-    return data;
+    const response = await apiClient.get<any, AnalyticsResponse<RecruitingFunnelData>>('/api/v1/analytics/funnel');
+    return response;
   },
 
   async getMatching(): Promise<AnalyticsResponse<MatchingAnalyticsData>> {
-    const { data } = await apiClient.get<AnalyticsResponse<MatchingAnalyticsData>>('/api/v1/analytics/matching');
-    return data;
+    const response = await apiClient.get<any, AnalyticsResponse<MatchingAnalyticsData>>('/api/v1/analytics/matching');
+    return response;
   },
 
   async getWorkflow(): Promise<AnalyticsResponse<WorkflowAnalyticsData>> {
-    const { data } = await apiClient.get<AnalyticsResponse<WorkflowAnalyticsData>>('/api/v1/analytics/workflow');
-    return data;
+    const response = await apiClient.get<any, AnalyticsResponse<WorkflowAnalyticsData>>('/api/v1/analytics/workflow');
+    return response;
   },
 
   async getMemory(): Promise<AnalyticsResponse<MemoryAnalyticsData>> {
-    const { data } = await apiClient.get<AnalyticsResponse<MemoryAnalyticsData>>('/api/v1/analytics/memory');
-    return data;
+    const response = await apiClient.get<any, AnalyticsResponse<MemoryAnalyticsData>>('/api/v1/analytics/memory');
+    return response;
   },
 
   async getAgent(): Promise<AnalyticsResponse<AgentAnalyticsData>> {
-    const { data } = await apiClient.get<AnalyticsResponse<AgentAnalyticsData>>('/api/v1/analytics/agent');
-    return data;
+    const response = await apiClient.get<any, AnalyticsResponse<AgentAnalyticsData>>('/api/v1/analytics/agent');
+    return response;
   },
 
   async getTools(): Promise<AnalyticsResponse<ToolAnalyticsData>> {
-    const { data } = await apiClient.get<AnalyticsResponse<ToolAnalyticsData>>('/api/v1/analytics/tools');
-    return data;
+    const response = await apiClient.get<any, AnalyticsResponse<ToolAnalyticsData>>('/api/v1/analytics/tools');
+    return response;
   },
 
   async getOrganization(): Promise<AnalyticsResponse<OrganizationAnalyticsData>> {
-    const { data } = await apiClient.get<AnalyticsResponse<OrganizationAnalyticsData>>('/api/v1/analytics/organization');
-    return data;
+    const response = await apiClient.get<any, AnalyticsResponse<OrganizationAnalyticsData>>('/api/v1/analytics/organization');
+    return response;
   },
 
   async getHealth(): Promise<AnalyticsResponse<PlatformHealthData>> {
-    const { data } = await apiClient.get<AnalyticsResponse<PlatformHealthData>>('/api/v1/analytics/health');
-    return data;
+    const response = await apiClient.get<any, AnalyticsResponse<PlatformHealthData>>('/api/v1/analytics/health');
+    return response;
   }
 };

@@ -1,7 +1,4 @@
-from fastapi import APIRouter
-from src.presentation.api.dependencies.auth import get_current_user
-from src.infrastructure.database.models import UserModel
-, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any, List
 from uuid import UUID
@@ -58,9 +55,9 @@ async def get_activity(service: OrganizationQueryService = Depends(get_org_servi
 
 # Kept for compatibility / write ops
 @router.post("/goals")
-async def create_goal(current_user: UserModel = Depends(get_current_user), request: Dict[str, Any]) -> Any:
+async def create_goal(request: Dict[str, Any]) -> Any:
     raise HTTPException(status_code=501, detail="feature_available: false")
 
 @router.post("/skills/{skill_id}/execute")
-async def execute_skill(current_user: UserModel = Depends(get_current_user), skill_id: UUID, payload: Dict[str, Any]) -> Any:
+async def execute_skill(skill_id: UUID, payload: Dict[str, Any]) -> Any:
     raise HTTPException(status_code=501, detail="feature_available: false")

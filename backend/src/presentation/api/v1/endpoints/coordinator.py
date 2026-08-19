@@ -1,7 +1,4 @@
-from fastapi import APIRouter
-from src.presentation.api.dependencies.auth import get_current_user
-from src.infrastructure.database.models import UserModel
-, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any, List
 from uuid import UUID
@@ -42,17 +39,17 @@ async def get_conflicts(service: CoordinationQueryService = Depends(get_coord_se
 
 # Write operations kept for compatibility
 @router.post("/start")
-async def start_coordination(current_user: UserModel = Depends(get_current_user), request: Dict[str, Any]) -> Any:
+async def start_coordination(request: Dict[str, Any]) -> Any:
     raise HTTPException(status_code=501, detail="feature_available: false")
 
 @router.post("/pause")
-async def pause_coordination(current_user: UserModel = Depends(get_current_user), ) -> Any:
+async def pause_coordination() -> Any:
     raise HTTPException(status_code=501, detail="feature_available: false")
 
 @router.post("/resume")
-async def resume_coordination(current_user: UserModel = Depends(get_current_user), ) -> Any:
+async def resume_coordination() -> Any:
     raise HTTPException(status_code=501, detail="feature_available: false")
 
 @router.post("/cancel")
-async def cancel_coordination(current_user: UserModel = Depends(get_current_user), ) -> Any:
+async def cancel_coordination() -> Any:
     raise HTTPException(status_code=501, detail="feature_available: false")
