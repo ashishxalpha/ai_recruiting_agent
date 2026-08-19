@@ -12,7 +12,20 @@ from src.infrastructure.database.repositories.feedback_repository import Recruit
 from src.infrastructure.events.event_bus import EventBus
 from src.domain.events import RecruiterFeedbackSubmitted
 
+from src.application.services.feedback_service import FeedbackService
+from src.application.schemas.feedback import PendingMatchDTO
+from typing import List
+
 router = APIRouter()
+
+def get_feedback_service(db: AsyncSession = Depends(get_db_session)) -> FeedbackService:
+    return FeedbackService(db)
+
+@router.get("/pending", response_model=List[PendingMatchDTO])
+async def get_pending_feedback(
+    service: FeedbackService = Depends(get_feedback_service)
+) -> Any:
+    return await service.get_pending_feedback()
 
 class FeedbackCreateRequest(BaseModel):
     decision: RecruiterDecision

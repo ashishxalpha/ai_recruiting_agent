@@ -90,4 +90,56 @@ class CandidateQueryService:
         )
 
     async def get_candidate_details(self, id: UUID) -> Optional[CandidateDetailsDTO]:
-        return None
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+        from src.infrastructure.database.models import CandidateModel
+        from src.application.schemas.candidate import (
+            CandidateProfileDTO,
+            CandidateSkillDTO,
+            CandidateExperienceDTO,
+            CandidateEducationDTO,
+            CandidateProjectDTO
+        )
+
+        stmt = select(CandidateModel).where(CandidateModel.id == id).options(
+            selectinload(CandidateModel.skills),
+            selectinload(CandidateModel.experience),
+            selectinload(CandidateModel.education),
+            selectinload(CandidateModel.projects)
+        )
+        result = await self.db.execute(stmt)
+        c = result.scalar_one_or_none()
+
+        if not c:
+            return None
+
+        profile = CandidateProfileDTO(
+            id=c.id,
+            status=c.status.value,
+            first_name=c.first_name,
+            last_name=c.last_name,
+            email=c.email,
+            phone=c.phone,
+            summary=c.summary,
+            created_at=c.created_at,
+            updated_at=c.updated_at
+        )
+
+        skills = [CandidateSkillDTO(id=s.id, name=s.name, proficiency=s.proficiency) for s in c.skills]
+        experience = [CandidateExperienceDTO(
+            id=e.id, company=e.company, title=e.title, start_date=e.start_date, end_date=e.end_date, description=e.description
+        ) for e in c.experience]
+        education = [CandidateEducationDTO(
+            id=e.id, institution=e.institution, degree=e.degree, field_of_study=e.field_of_study, start_date=e.start_date, end_date=e.end_date, description=e.description
+        ) for e in c.education]
+        projects = [CandidateProjectDTO(
+            id=p.id, name=p.name, description=p.description, url=p.url
+        ) for p in c.projects]
+
+        return CandidateDetailsDTO(
+            profile=profile,
+            skills=skills,
+            experience=experience,
+            education=education,
+            projects=projects
+        )

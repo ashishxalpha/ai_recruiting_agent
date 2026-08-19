@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from .endpoints import resumes, documents, candidates, jobs, extractions, search, feedback, outcomes, analytics, stream, workflows, memory, tools, agents, coordinator, organization, dashboard, auth
+from .endpoints import resumes, documents, candidates, jobs, extractions, search, feedback, outcomes, analytics, stream, workflows, memory, tools, agents, coordinator, organization, dashboard, auth, background_jobs
 
 api_router = APIRouter()
 
@@ -8,9 +8,10 @@ api_router.include_router(resumes.router, prefix="/resumes", tags=["resumes"])
 api_router.include_router(documents.router, prefix="/documents", tags=["documents"])
 api_router.include_router(candidates.router, prefix="/candidates", tags=["candidates"])
 api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
+api_router.include_router(background_jobs.router, prefix="/background-jobs", tags=["background-jobs"])
 api_router.include_router(extractions.router, prefix="/extractions", tags=["extractions"])
 api_router.include_router(search.router, prefix="/search", tags=["search"])
-api_router.include_router(feedback.router, tags=["feedback"])
+api_router.include_router(feedback.router, prefix="/feedback", tags=["feedback"])
 api_router.include_router(outcomes.router, tags=["outcomes"])
 api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])

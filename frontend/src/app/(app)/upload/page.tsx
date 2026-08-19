@@ -5,10 +5,76 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { useRecentIngestions } from "@/hooks/useIngestions";
+import { Loader2, AlertCircle, Eye } from "lucide-react";
+import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
+
+function RecentUploadsList() {
+  const { data: ingestions, isLoading, isError } = useRecentIngestions();
+
+  if (isLoading) {
+    return <div className="text-center py-4 text-muted-foreground"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></div>;
+  }
+
+  if (isError || !ingestions) {
+    return <div className="text-center py-4 text-destructive">Failed to load recent uploads.</div>;
+  }
+
+  if (ingestions.length === 0) {
+    return <div className="text-center py-4 text-muted-foreground">No recent uploads.</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {ingestions.map((item) => (
+        <div key={item.id} className="flex items-center justify-between p-3 border rounded-md bg-card">
+          <div className="flex items-center space-x-3 truncate mr-4">
+            <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
+            <div className="truncate">
+              <p className="text-sm font-medium truncate" title={item.filename}>{item.filename}</p>
+              <p className="text-xs text-muted-foreground">
+                {new Date(item.created_at).toLocaleString()}
+                {item.status === 'FAILED' && <span className="text-destructive ml-2">• {item.error_message || "Processing failed"}</span>}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center flex-shrink-0 space-x-4">
+            <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground w-20 text-right">
+              {item.status}
+            </div>
+            
+            {(item.status === 'QUEUED' || item.status === 'RUNNING') && (
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            )}
+            
+            {item.status === 'COMPLETED' && (
+              <>
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+                {item.candidate_id && (
+                  <Link href={`/candidates/${item.candidate_id}`}>
+                    <Button size="sm" variant="outline" className="ml-2 h-8">
+                      <Eye className="w-4 h-4 mr-2" /> View
+                    </Button>
+                  </Link>
+                )}
+              </>
+            )}
+            
+            {item.status === 'FAILED' && (
+              <AlertCircle className="w-5 h-5 text-destructive" />
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function ResumeUploadPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -46,6 +112,8 @@ export default function ResumeUploadPage() {
       }
 
       toast.success("Resume uploaded successfully. Extraction pipeline started.");
+      // Invalidate ingestions query to immediately show the new upload
+      queryClient.invalidateQueries({ queryKey: ['ingestions'] });
     } catch (error: any) {
       toast.error(error.message || "Failed to upload resume.");
     } finally {
@@ -98,21 +166,12 @@ export default function ResumeUploadPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Recent Uploads</CardTitle>
+          <CardTitle className="text-lg flex justify-between items-center">
+            Recent Uploads
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 border rounded-md">
-              <div className="flex items-center space-x-3">
-                <FileText className="w-5 h-5 text-blue-500" />
-                <div>
-                  <p className="text-sm font-medium">john_doe_resume_2026.pdf</p>
-                  <p className="text-xs text-muted-foreground">Uploaded 2 hours ago</p>
-                </div>
-              </div>
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-            </div>
-          </div>
+          <RecentUploadsList />
         </CardContent>
       </Card>
     </div>

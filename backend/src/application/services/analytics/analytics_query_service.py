@@ -18,7 +18,8 @@ from src.infrastructure.database.models import (
     WorkflowExecutionModel,
     MemoryModel,
     WorkflowNodeExecutionModel,
-    ToolExecutionModel
+    ToolExecutionModel,
+    RecruiterFeedbackModel
 )
 
 class AnalyticsQueryService:
@@ -28,8 +29,19 @@ class AnalyticsQueryService:
     async def get_funnel_metrics(self) -> AnalyticsResponseDTO[RecruitingFunnelDTO]:
         total_cands = (await self.db.execute(select(func.count(CandidateModel.id)))).scalar() or 0
         total_matches = (await self.db.execute(select(func.count(CandidateMatchModel.id)))).scalar() or 0
+        
+        # Shortlisted = Approved feedback
+        shortlisted = (await self.db.execute(
+            select(func.count(RecruiterFeedbackModel.id)).where(RecruiterFeedbackModel.decision == "APPROVED")
+        )).scalar() or 0
+
+        # Review = pending feedback (Matches without feedback)
+        # Using a subquery or join is better, but since this is analytics, we can approximate:
+        total_feedback = (await self.db.execute(select(func.count(RecruiterFeedbackModel.id)))).scalar() or 0
+        review = max(0, total_matches - total_feedback)
+
         return AnalyticsResponseDTO(status="available", data=RecruitingFunnelDTO(
-            applications=total_cands, processing=total_matches, review=0, shortlisted=0, interview=0, offer=0, hired=0
+            applications=total_cands, processing=total_matches, review=review, shortlisted=shortlisted, interview=0, offer=0, hired=0
         ))
 
     async def get_matching_analytics(self) -> AnalyticsResponseDTO[MatchingAnalyticsDTO]:

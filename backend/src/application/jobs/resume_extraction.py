@@ -126,19 +126,33 @@ class ResumeExtractionWorkflow:
                 )
                 await self.extraction_repo.create(extraction)
 
-                # 6. Candidate Generation
-                candidate = Candidate(
-                    id=uuid.uuid4(),
-                    status=CandidateStatus.UNDER_REVIEW,
-                    first_name=profile.first_name,
-                    last_name=profile.last_name,
-                    email=profile.email,
-                    phone=profile.phone,
-                    summary=profile.summary,
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow()
-                )
+                # 6. Candidate Generation / Update
+                existing_candidate = None
+                if profile.email:
+                    existing_candidate = await self.candidate_repo.get_by_email(profile.email)
+                
+                if existing_candidate:
+                    candidate = existing_candidate
+                    # Update fields
+                    candidate.first_name = profile.first_name
+                    candidate.last_name = profile.last_name
+                    candidate.phone = profile.phone
+                    candidate.summary = profile.summary
+                    candidate.updated_at = datetime.utcnow()
+                else:
+                    candidate = Candidate(
+                        id=uuid.uuid4(),
+                        status=CandidateStatus.UNDER_REVIEW,
+                        first_name=profile.first_name,
+                        last_name=profile.last_name,
+                        email=profile.email,
+                        phone=profile.phone,
+                        summary=profile.summary,
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
 
+                # Recreate related items
                 candidate.skills = [
                     CandidateSkill(id=uuid.uuid4(), candidate_id=candidate.id, name=s.name, proficiency=s.proficiency)
                     for s in profile.skills
@@ -163,7 +177,10 @@ class ResumeExtractionWorkflow:
                     ) for p in profile.projects
                 ]
 
-                await self.candidate_repo.create(candidate)
+                if existing_candidate:
+                    await self.candidate_repo.update(candidate)
+                else:
+                    await self.candidate_repo.create(candidate)
 
                 # Link document to candidate
                 document.candidate_id = candidate.id

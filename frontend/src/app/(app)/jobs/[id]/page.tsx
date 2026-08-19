@@ -20,6 +20,8 @@ import {
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { EmptyState } from "@/components/ui/empty-state";
+
 // Isolated Tab Components for Lazy Loading
 
 function CandidatesTab({ id }: { id: string }) {
@@ -29,13 +31,51 @@ function CandidatesTab({ id }: { id: string }) {
   return (
     <Card>
       <CardHeader><CardTitle>Applied Candidates</CardTitle></CardHeader>
-      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+      <CardContent>
+        {data && data.length > 0 ? (
+          <pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre>
+        ) : (
+          <EmptyState 
+            icon={<Users className="w-8 h-8" />} 
+            title="No Candidates Found" 
+            description="There are no candidates associated with this job requirement yet." 
+          />
+        )}
+      </CardContent>
     </Card>
   );
 }
 
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+
 function MatchingTab({ id }: { id: string }) {
-  const { data, isLoading, isError } = useJobMatches(id);
+  const { data, isLoading, isError, refetch } = useJobMatches(id);
+  const router = useRouter();
+  const [isRunning, setIsRunning] = useState(false);
+
+  const handleRunMatch = async () => {
+    setIsRunning(true);
+    toast.info("Running AI Semantic Matcher...");
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${apiUrl}/api/v1/jobs/${id}/match`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!res.ok) throw new Error("Failed to run match");
+      toast.success("Matching complete!");
+      refetch();
+      router.push(`/jobs/${id}/matching`);
+    } catch (e) {
+      toast.error("Failed to execute matching");
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
   if (isLoading) return <Skeleton className="h-40 w-full" />;
   if (isError) return <ErrorState title="Failed to load matches" />;
   return (
@@ -43,10 +83,28 @@ function MatchingTab({ id }: { id: string }) {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Semantic Matching Results</CardTitle>
-          <Button variant="outline" size="sm"><Play className="w-4 h-4 mr-2" /> Run Matching Engine</Button>
+          <div className="flex gap-2">
+            <Button variant="default" size="sm" onClick={handleRunMatch} disabled={isRunning}>
+              {isRunning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
+              {isRunning ? "Running..." : "Run AI Matcher"}
+            </Button>
+            <Link href={`/jobs/${id}/matching`}>
+              <Button variant="outline" size="sm">View Details</Button>
+            </Link>
+          </div>
         </div>
       </CardHeader>
-      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+      <CardContent>
+        {data && data.length > 0 ? (
+          <pre className="text-xs bg-muted p-4 rounded-md overflow-y-auto max-h-96">{JSON.stringify(data, null, 2)}</pre>
+        ) : (
+          <EmptyState 
+            icon={<CheckCircle className="w-8 h-8" />} 
+            title="No Matches Found" 
+            description="Run the AI matcher to find the best candidates for this role."
+          />
+        )}
+      </CardContent>
     </Card>
   );
 }
@@ -58,7 +116,17 @@ function WorkflowTab({ id }: { id: string }) {
   return (
     <Card>
       <CardHeader><CardTitle>Recruitment Workflow</CardTitle></CardHeader>
-      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+      <CardContent>
+        {data && data.length > 0 ? (
+          <pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre>
+        ) : (
+          <EmptyState 
+            icon={<Settings className="w-8 h-8" />} 
+            title="No Workflow Data" 
+            description="There are no active or historical workflows for this job." 
+          />
+        )}
+      </CardContent>
     </Card>
   );
 }
@@ -70,7 +138,17 @@ function AnalyticsTab({ id }: { id: string }) {
   return (
     <Card>
       <CardHeader><CardTitle>Recruitment Analytics</CardTitle></CardHeader>
-      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+      <CardContent>
+        {data && data.total_candidates > 0 ? (
+          <pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre>
+        ) : (
+          <EmptyState 
+            icon={<BarChart3 className="w-8 h-8" />} 
+            title="No Analytics Data" 
+            description="Insufficient data to generate analytics for this job." 
+          />
+        )}
+      </CardContent>
     </Card>
   );
 }
@@ -82,7 +160,17 @@ function FeedbackTab({ id }: { id: string }) {
   return (
     <Card>
       <CardHeader><CardTitle>Recruiter Feedback</CardTitle></CardHeader>
-      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+      <CardContent>
+        {data && data.length > 0 ? (
+          <pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre>
+        ) : (
+          <EmptyState 
+            icon={<History className="w-8 h-8" />} 
+            title="No Feedback Yet" 
+            description="You haven't provided any feedback on candidate matches." 
+          />
+        )}
+      </CardContent>
     </Card>
   );
 }
@@ -94,7 +182,17 @@ function DocumentsTab({ id }: { id: string }) {
   return (
     <Card>
       <CardHeader><CardTitle>Job Documents</CardTitle></CardHeader>
-      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+      <CardContent>
+        {data && data.length > 0 ? (
+          <pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre>
+        ) : (
+          <EmptyState 
+            icon={<FileText className="w-8 h-8" />} 
+            title="No Documents" 
+            description="No supplementary documents have been uploaded for this job." 
+          />
+        )}
+      </CardContent>
     </Card>
   );
 }
@@ -106,7 +204,17 @@ function HistoryTab({ id }: { id: string }) {
   return (
     <Card>
       <CardHeader><CardTitle>Search Sessions (Ranking History)</CardTitle></CardHeader>
-      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+      <CardContent>
+        {data && data.length > 0 ? (
+          <pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre>
+        ) : (
+          <EmptyState 
+            icon={<History className="w-8 h-8" />} 
+            title="No History" 
+            description="No search or matching sessions have been recorded." 
+          />
+        )}
+      </CardContent>
     </Card>
   );
 }

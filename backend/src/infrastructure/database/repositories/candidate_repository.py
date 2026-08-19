@@ -76,6 +76,29 @@ class SQLAlchemyCandidateRepository(CandidateRepository):
             updated_at=model.updated_at
         )
 
+    async def get_by_email(self, email: str) -> Optional[Candidate]:
+        result = await self.session.execute(
+            select(CandidateModel)
+            .where(CandidateModel.email == email, CandidateModel.deleted_at == None)
+            .order_by(CandidateModel.created_at.desc())
+            .limit(1)
+        )
+        model = result.scalar_one_or_none()
+        if not model:
+            return None
+        
+        return Candidate(
+            id=model.id,
+            status=model.status,
+            first_name=model.first_name,
+            last_name=model.last_name,
+            email=model.email,
+            phone=model.phone,
+            summary=model.summary,
+            created_at=model.created_at,
+            updated_at=model.updated_at
+        )
+
     async def get_all(self, skip: int = 0, limit: int = 100) -> List[Candidate]:
         result = await self.session.execute(
             select(CandidateModel)
@@ -99,6 +122,8 @@ class SQLAlchemyCandidateRepository(CandidateRepository):
         ]
 
     async def update(self, candidate: Candidate) -> Candidate:
+        from sqlalchemy import delete
+        
         result = await self.session.execute(
             select(CandidateModel).where(CandidateModel.id == candidate.id)
         )
@@ -111,6 +136,23 @@ class SQLAlchemyCandidateRepository(CandidateRepository):
             model.phone = candidate.phone
             model.summary = candidate.summary
             model.updated_at = candidate.updated_at
+            
+            # Wipe existing relationships
+            await self.session.execute(delete(CandidateSkillModel).where(CandidateSkillModel.candidate_id == candidate.id))
+            await self.session.execute(delete(CandidateEducationModel).where(CandidateEducationModel.candidate_id == candidate.id))
+            await self.session.execute(delete(CandidateExperienceModel).where(CandidateExperienceModel.candidate_id == candidate.id))
+            await self.session.execute(delete(CandidateProjectModel).where(CandidateProjectModel.candidate_id == candidate.id))
+            
+            # Recreate relationships
+            for s in candidate.skills:
+                self.session.add(CandidateSkillModel(id=s.id, candidate_id=candidate.id, name=s.name, proficiency=s.proficiency))
+            for e in candidate.education:
+                self.session.add(CandidateEducationModel(id=e.id, candidate_id=candidate.id, institution=e.institution, degree=e.degree, field_of_study=e.field_of_study, start_date=e.start_date, end_date=e.end_date, description=e.description))
+            for e in candidate.experience:
+                self.session.add(CandidateExperienceModel(id=e.id, candidate_id=candidate.id, company=e.company, title=e.title, start_date=e.start_date, end_date=e.end_date, description=e.description))
+            for p in candidate.projects:
+                self.session.add(CandidateProjectModel(id=p.id, candidate_id=candidate.id, name=p.name, description=p.description, url=p.url))
+            
             await self.session.commit()
         return candidate
 

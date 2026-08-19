@@ -73,6 +73,13 @@ async def cancel_workflow(workflow_id: UUID,
 
 # --- Read Endpoints (Workflow Platform Observability) ---
 
+@router.get("", response_model=WorkflowResponseDTO[list[WorkflowSummaryDTO]])
+async def get_workflows(
+    service: WorkflowQueryService = Depends(get_workflow_query_service)
+):
+    """Get a list of all workflows."""
+    return await service.get_list()
+
 @router.get("/{workflow_id}", response_model=WorkflowResponseDTO[WorkflowSummaryDTO])
 async def get_workflow_summary(
     workflow_id: UUID,

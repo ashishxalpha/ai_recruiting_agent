@@ -18,71 +18,49 @@ class JobRequirementCreate(BaseModel):
     skills_required: list[str] = []
     experience_required: Optional[str] = None
 
-class JobUpdateRequest(BaseModel):
-    status: JobStatus
-    error_message: Optional[str] = None
+from src.application.services.job_query_service import JobQueryService
+from src.application.schemas.job import JobSummaryDTO, JobDetailsDTO
+from src.application.schemas.pagination import PaginatedResponse
 
-@router.get("")
+def get_job_query_service(db: AsyncSession = Depends(get_db_session)) -> JobQueryService:
+    return JobQueryService(db)
+
+@router.get("", response_model=PaginatedResponse[JobSummaryDTO])
 async def list_jobs(
     page: int = 1,
     page_size: int = 20,
     search: Optional[str] = None,
     status: Optional[str] = None,
+    department: Optional[str] = None,
+    location: Optional[str] = None,
+    employment_type: Optional[str] = None,
     sort_by: str = "created_at",
-    sort_order: str = "desc"
+    sort_order: str = "desc",
+    service: JobQueryService = Depends(get_job_query_service)
 ) -> Any:
-    from src.application.schemas.pagination import PaginatedResponse
-    return PaginatedResponse(
-        items=[],
-        page=page,
-        page_size=page_size,
-        total=0,
-        total_pages=0,
-        has_next=False,
-        has_previous=False
-    )
+    with tracer.start_as_current_span("API.GET./api/v1/jobs"):
+        return await service.list_jobs(
+            page=page,
+            page_size=page_size,
+            search=search,
+            status=status,
+            department=department,
+            location=location,
+            employment_type=employment_type,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
 
-@router.get("/{id}")
+@router.get("/{id}", response_model=JobDetailsDTO)
 async def get_job(
     id: UUID,
-    service: BackgroundJobService = Depends(get_job_service)
+    service: JobQueryService = Depends(get_job_query_service)
 ) -> Any:
     with tracer.start_as_current_span("API.GET./api/v1/jobs/{id}"):
-        job = await service.get_job(id)
+        job = await service.get_job_details(id)
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
         return job
-
-@router.patch("/{id}")
-async def update_job(
-    id: UUID,
-    request: JobUpdateRequest,
-    service: BackgroundJobService = Depends(get_job_service)
-) -> Any:
-    with tracer.start_as_current_span("API.PATCH./api/v1/jobs/{id}"):
-        job = await service.update_status(id, request.status, request.error_message)
-        if not job:
-            raise HTTPException(status_code=404, detail="Job not found")
-        return job
-
-@router.post("/{id}/execute")
-async def execute_job(
-    id: UUID,
-    service: BackgroundJobService = Depends(get_job_service)
-) -> Any:
-    """Manually execute a background job for development purposes."""
-    with tracer.start_as_current_span("API.POST./api/v1/jobs/{id}/execute"):
-        from src.infrastructure.workers.local_worker import execute_resume_extraction_job
-        job = await service.get_job(id)
-        if not job:
-            raise HTTPException(status_code=404, detail="Job not found")
-        
-        if job.job_type == "resume_extraction":
-            await execute_resume_extraction_job(id)
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported job type")
-            
-        return {"status": "executed"}
 
 @router.post("/requirements")
 async def create_job_requirement(
@@ -141,3 +119,74 @@ async def create_job_requirement(
         
         await db.commit()
         return created
+
+from src.application.services.candidate_matching_service import CandidateMatchingService
+from src.presentation.api.dependencies import get_candidate_matching_service
+
+@router.post("/{id}/match")
+async def run_job_match(
+    id: UUID,
+    service: CandidateMatchingService = Depends(get_candidate_matching_service)
+) -> Any:
+    """Run an AI evaluation of all candidates against this job requirement."""
+    with tracer.start_as_current_span("API.POST./api/v1/jobs/{id}/match"):
+        session_id = await service.run_semantic_match(job_requirement_id=id, top_k=5)
+        return {"session_id": str(session_id), "status": "COMPLETED"}
+
+# Lazy Loaded Context Endpoints
+
+@router.get("/{id}/candidates")
+async def get_job_candidates(
+    id: UUID,
+    service: JobQueryService = Depends(get_job_query_service)
+):
+    with tracer.start_as_current_span("API.GET./api/v1/jobs/{id}/candidates"):
+        return await service.get_job_candidates(id)
+
+@router.get("/{id}/matches")
+async def get_job_matches(
+    id: UUID,
+    service: JobQueryService = Depends(get_job_query_service)
+):
+    with tracer.start_as_current_span("API.GET./api/v1/jobs/{id}/matches"):
+        return await service.get_job_matches(id)
+
+@router.get("/{id}/workflow")
+async def get_job_workflow(
+    id: UUID,
+    service: JobQueryService = Depends(get_job_query_service)
+):
+    with tracer.start_as_current_span("API.GET./api/v1/jobs/{id}/workflow"):
+        return await service.get_job_workflows(id)
+
+@router.get("/{id}/analytics")
+async def get_job_analytics(
+    id: UUID,
+    service: JobQueryService = Depends(get_job_query_service)
+):
+    with tracer.start_as_current_span("API.GET./api/v1/jobs/{id}/analytics"):
+        return await service.get_job_analytics(id)
+
+@router.get("/{id}/feedback")
+async def get_job_feedback(
+    id: UUID,
+    service: JobQueryService = Depends(get_job_query_service)
+):
+    with tracer.start_as_current_span("API.GET./api/v1/jobs/{id}/feedback"):
+        return await service.get_job_feedback(id)
+
+@router.get("/{id}/documents")
+async def get_job_documents(
+    id: UUID,
+    service: JobQueryService = Depends(get_job_query_service)
+):
+    with tracer.start_as_current_span("API.GET./api/v1/jobs/{id}/documents"):
+        return await service.get_job_documents(id)
+
+@router.get("/{id}/history")
+async def get_job_history(
+    id: UUID,
+    service: JobQueryService = Depends(get_job_query_service)
+):
+    with tracer.start_as_current_span("API.GET./api/v1/jobs/{id}/history"):
+        return await service.get_job_history(id)

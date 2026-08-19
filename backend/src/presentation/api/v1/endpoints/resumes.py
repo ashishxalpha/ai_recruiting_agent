@@ -5,6 +5,8 @@ from typing import Dict, Any
 from src.application.services.resume_upload_service import ResumeUploadService
 from src.presentation.api.dependencies import get_resume_upload_service
 from src.observability.tracing import get_tracer
+from src.application.schemas.resumes import IngestionItemDTO
+from typing import List
 
 router = APIRouter()
 tracer = get_tracer(__name__)
@@ -36,3 +38,11 @@ async def upload_resume(
         
         result = await upload_service.process_upload(file_bytes, file.filename, file.content_type)
         return UploadResponse(**result)
+
+@router.get("/ingestions", response_model=List[IngestionItemDTO])
+async def get_recent_ingestions(
+    upload_service: ResumeUploadService = Depends(get_resume_upload_service)
+):
+    """Get the 10 most recent resume ingestions."""
+    with tracer.start_as_current_span("API.GET./api/v1/resumes/ingestions"):
+        return await upload_service.get_recent_ingestions(limit=10)

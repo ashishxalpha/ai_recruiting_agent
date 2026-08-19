@@ -38,7 +38,8 @@ def get_resume_upload_service(
         job_repo=SQLAlchemyJobRepository(session),
         audit_repo=SQLAlchemyAuditRepository(session),
         storage_provider=storage_provider,
-        job_dispatcher=FastAPIJobDispatcher(background_tasks)
+        job_dispatcher=FastAPIJobDispatcher(background_tasks),
+        db_session=session
     )
 
 def get_document_service(
@@ -59,6 +60,24 @@ def get_candidate_service(session: AsyncSession = fastapi.Depends(get_db_session
         candidate_repo=SQLAlchemyCandidateRepository(session),
         document_repo=SQLAlchemyCandidateDocumentRepository(session)
     )
+
+def get_candidate_matching_service(session: AsyncSession = fastapi.Depends(get_db_session)):
+    import os
+    from src.infrastructure.providers.ai.openai import OpenAIExtractionProvider
+    from src.infrastructure.database.repositories.search_session_repository import SearchSessionRepository
+    from src.infrastructure.database.repositories.candidate_match_repository import CandidateMatchRepository
+    from src.application.services.match_persistence_service import CandidateMatchPersistenceService
+    from src.application.services.candidate_matching_service import CandidateMatchingService
+    
+    api_key = os.getenv("OPENAI_API_KEY", "dummy_key")
+    model_name = os.getenv("AI_EXTRACTION_MODEL", "gpt-4o")
+    ai_provider = OpenAIExtractionProvider(api_key=api_key, model_name=model_name)
+    
+    session_repo = SearchSessionRepository(session)
+    match_repo = CandidateMatchRepository(session)
+    persistence_service = CandidateMatchPersistenceService(session_repo, match_repo)
+    
+    return CandidateMatchingService(session, ai_provider, persistence_service)
 
 def get_workflow_engine(session: AsyncSession = fastapi.Depends(get_db_session)):
     from src.application.workflows.workflow_registry import InMemoryWorkflowDefinitionRegistry

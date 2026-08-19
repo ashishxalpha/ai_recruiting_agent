@@ -36,6 +36,9 @@ class WorkflowQueryService:
     async def get_summary(self, workflow_id: UUID) -> WorkflowResponseDTO[WorkflowSummaryDTO]:
         return await self.summary_provider.get_summary(workflow_id)
 
+    async def get_list(self) -> WorkflowResponseDTO[list[WorkflowSummaryDTO]]:
+        return await self.summary_provider.get_list()
+
     async def get_graph(self, workflow_id: UUID) -> WorkflowResponseDTO[WorkflowGraphDTO]:
         return await self.graph_provider.get_graph(workflow_id)
 

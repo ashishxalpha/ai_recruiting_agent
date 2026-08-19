@@ -54,6 +54,30 @@ class SummaryProvider:
             )
         )
 
+    async def get_list(self) -> WorkflowResponseDTO[list[WorkflowSummaryDTO]]:
+        result = await self.session.execute(
+            select(WorkflowExecutionModel)
+            .order_by(WorkflowExecutionModel.started_at.desc())
+            .limit(20)
+        )
+        executions = result.scalars().all()
+        
+        dtos = []
+        for execution in executions:
+            dtos.append(
+                WorkflowSummaryDTO(
+                    id=execution.id,
+                    job_id=execution.job_id or uuid.uuid4(),
+                    candidate_id=execution.candidate_id or uuid.uuid4(),
+                    status=execution.status,
+                    started_at=execution.started_at,
+                    current_node=execution.current_node or "",
+                    workflow_version=execution.workflow_version
+                )
+            )
+            
+        return WorkflowResponseDTO(status="available", data=dtos)
+
 class GraphProvider:
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -63,20 +87,62 @@ class GraphProvider:
             select(WorkflowExecutionModel).where(WorkflowExecutionModel.id == workflow_id)
         )
         execution = result.scalar_one_or_none()
-        current_node = execution.current_node if execution else None
+        if not execution:
+            return WorkflowResponseDTO(status="unavailable", error="Workflow execution not found")
+            
+        current_node = execution.current_node
         
+        # Get all executed nodes in order
+        nodes_result = await self.session.execute(
+            select(WorkflowNodeExecutionModel)
+            .where(WorkflowNodeExecutionModel.workflow_execution_id == workflow_id)
+            .order_by(WorkflowNodeExecutionModel.start_time.asc())
+        )
+        executed_nodes = nodes_result.scalars().all()
+        
+        if not executed_nodes:
+            # Fallback to empty if no nodes executed yet
+            return WorkflowResponseDTO(status="available", data=WorkflowGraphDTO(
+                nodes=[], edges=[], current_node_id=current_node
+            ))
+            
+        unique_nodes = []
+        seen = set()
+        for n in executed_nodes:
+            if n.node_id not in seen:
+                seen.add(n.node_id)
+                unique_nodes.append(n.node_id)
+                
+        # Build node DTOs
+        nodes = []
+        y_offset = 0
+        for i, nid in enumerate(unique_nodes):
+            nodes.append(
+                WorkflowGraphNodeDTO(
+                    id=nid,
+                    type="default",
+                    data={"label": nid.replace("_", " ").title()},
+                    position={"x": 250, "y": y_offset}
+                )
+            )
+            y_offset += 100
+            
+        # Build edge DTOs
+        edges = []
+        for i in range(len(unique_nodes) - 1):
+            source = unique_nodes[i]
+            target = unique_nodes[i+1]
+            edges.append(
+                WorkflowGraphEdgeDTO(
+                    id=f"e{i}",
+                    source=source,
+                    target=target
+                )
+            )
+            
         data = WorkflowGraphDTO(
-            nodes=[
-                WorkflowGraphNodeDTO(id="upload", type="default", data={"label": "Upload Validation"}, position={"x": 250, "y": 0}),
-                WorkflowGraphNodeDTO(id="parse", type="default", data={"label": "Document Parsing"}, position={"x": 250, "y": 100}),
-                WorkflowGraphNodeDTO(id="extract", type="default", data={"label": "AI Extraction"}, position={"x": 250, "y": 200}),
-                WorkflowGraphNodeDTO(id="evaluate", type="default", data={"label": "Profile Evaluation"}, position={"x": 250, "y": 300}),
-            ],
-            edges=[
-                WorkflowGraphEdgeDTO(id="e1", source="upload", target="parse"),
-                WorkflowGraphEdgeDTO(id="e2", source="parse", target="extract"),
-                WorkflowGraphEdgeDTO(id="e3", source="extract", target="evaluate")
-            ],
+            nodes=nodes,
+            edges=edges,
             current_node_id=current_node
         )
         return WorkflowResponseDTO(status="available", data=data)

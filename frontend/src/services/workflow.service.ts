@@ -11,6 +11,11 @@ import {
 } from "@/types/workflow";
 
 export const WorkflowService = {
+  async getList(): Promise<WorkflowResponse<WorkflowSummaryData[]>> {
+    const response = await apiClient.get<any, WorkflowResponse<WorkflowSummaryData[]>>(`/api/v1/workflows`);
+    return response;
+  },
+
   async getSummary(id: string): Promise<WorkflowResponse<WorkflowSummaryData>> {
     const response = await apiClient.get<any, WorkflowResponse<WorkflowSummaryData>>(`/api/v1/workflows/${id}`);
     return response;

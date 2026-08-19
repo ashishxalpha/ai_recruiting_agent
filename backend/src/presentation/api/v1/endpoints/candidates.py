@@ -47,9 +47,21 @@ async def get_candidate(
         return candidate
 
 @router.get("/{id}/workflow")
-async def get_candidate_workflow(id: UUID):
-    # To be implemented
-    raise HTTPException(status_code=501, detail="feature_available: false")
+async def get_candidate_workflow(id: UUID, db: AsyncSession = Depends(get_db_session)):
+    with tracer.start_as_current_span("API.GET./api/v1/candidates/{id}/workflow"):
+        from sqlalchemy import select
+        from src.infrastructure.database.models import WorkflowExecutionModel
+        stmt = select(WorkflowExecutionModel).where(WorkflowExecutionModel.candidate_id == id)
+        result = await db.execute(stmt)
+        executions = result.scalars().all()
+        return [{
+            "id": e.id, 
+            "workflow_name": e.workflow_name, 
+            "status": e.status, 
+            "current_node": e.current_node,
+            "started_at": e.started_at,
+            "completed_at": e.completed_at
+        } for e in executions]
 
 @router.get("/{id}/evaluation")
 async def get_candidate_evaluation(id: UUID, db: AsyncSession = Depends(get_db_session)):
@@ -79,18 +91,29 @@ async def get_candidate_embeddings(id: UUID, db: AsyncSession = Depends(get_db_s
 
 @router.get("/{id}/memory")
 async def get_candidate_memory(id: UUID):
-    # To be implemented
-    raise HTTPException(status_code=501, detail="feature_available: false")
+    # For now, memory isn't directly linked to candidates in the same way, return empty list
+    return []
 
 @router.get("/{id}/matches")
-async def get_candidate_matches(id: UUID):
-    # To be implemented
-    raise HTTPException(status_code=501, detail="feature_available: false")
+async def get_candidate_matches(id: UUID, db: AsyncSession = Depends(get_db_session)):
+    with tracer.start_as_current_span("API.GET./api/v1/candidates/{id}/matches"):
+        from sqlalchemy import select
+        from src.infrastructure.database.models import CandidateMatchModel
+        stmt = select(CandidateMatchModel).where(CandidateMatchModel.candidate_id == id)
+        result = await db.execute(stmt)
+        matches = result.scalars().all()
+        return [{"id": m.id, "job_requirement_id": m.search_session_id, "semantic_score": m.semantic_score} for m in matches]
 
 @router.get("/{id}/feedback")
-async def get_candidate_feedback(id: UUID):
-    # To be implemented
-    raise HTTPException(status_code=501, detail="feature_available: false")
+async def get_candidate_feedback(id: UUID, db: AsyncSession = Depends(get_db_session)):
+    with tracer.start_as_current_span("API.GET./api/v1/candidates/{id}/feedback"):
+        from sqlalchemy import select
+        from src.infrastructure.database.models import CandidateMatchModel, RecruiterFeedbackModel
+        # Join feedback through match
+        stmt = select(RecruiterFeedbackModel).join(CandidateMatchModel).where(CandidateMatchModel.candidate_id == id)
+        result = await db.execute(stmt)
+        feedbacks = result.scalars().all()
+        return [{"id": f.id, "decision": f.decision, "confidence": f.confidence, "created_at": f.created_at} for f in feedbacks]
 
 @router.get("/{id}/documents")
 async def get_candidate_documents(

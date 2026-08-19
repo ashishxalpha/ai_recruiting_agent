@@ -18,6 +18,7 @@ import {
   useCandidateDocuments
 } from "@/hooks/useCandidates";
 import { ErrorState } from "@/components/ui/error-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Isolated Tab Components for Lazy Loading
@@ -26,10 +27,17 @@ function WorkflowTab({ id }: { id: string }) {
   const { data, isLoading, isError } = useCandidateWorkflow(id);
   if (isLoading) return <Skeleton className="h-40 w-full" />;
   if (isError) return <ErrorState title="Failed to load workflow data" />;
+  if (Array.isArray(data) && data.length === 0) {
+    return (
+      <Card>
+        <EmptyState icon={<Activity className="w-8 h-8" />} title="No Workflows Executed" description="This candidate has not been processed through any AI workflows yet." />
+      </Card>
+    );
+  }
   return (
     <Card>
       <CardHeader><CardTitle>Workflow Execution</CardTitle></CardHeader>
-      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md overflow-auto">{JSON.stringify(data, null, 2)}</pre></CardContent>
     </Card>
   );
 }
@@ -38,10 +46,17 @@ function EvaluationTab({ id }: { id: string }) {
   const { data, isLoading, isError } = useCandidateEvaluation(id);
   if (isLoading) return <Skeleton className="h-40 w-full" />;
   if (isError) return <ErrorState title="Failed to load evaluation data" />;
+  if (Array.isArray(data) && data.length === 0) {
+    return (
+      <Card>
+        <EmptyState icon={<Star className="w-8 h-8" />} title="No AI Evaluations" description="This candidate has not received any AI evaluations yet." />
+      </Card>
+    );
+  }
   return (
     <Card>
       <CardHeader><CardTitle>AI Evaluation</CardTitle></CardHeader>
-      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md overflow-auto">{JSON.stringify(data, null, 2)}</pre></CardContent>
     </Card>
   );
 }
@@ -50,10 +65,17 @@ function EmbeddingsTab({ id }: { id: string }) {
   const { data, isLoading, isError } = useCandidateEmbeddings(id);
   if (isLoading) return <Skeleton className="h-40 w-full" />;
   if (isError) return <ErrorState title="Failed to load embeddings data" />;
+  if (Array.isArray(data) && data.length === 0) {
+    return (
+      <Card>
+        <EmptyState icon={<Network className="w-8 h-8" />} title="No Embeddings Found" description="Vector embeddings have not been generated for this candidate." />
+      </Card>
+    );
+  }
   return (
     <Card>
       <CardHeader><CardTitle>Vector Embeddings</CardTitle></CardHeader>
-      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md overflow-auto">{JSON.stringify(data, null, 2)}</pre></CardContent>
     </Card>
   );
 }
@@ -62,10 +84,17 @@ function MatchingTab({ id }: { id: string }) {
   const { data, isLoading, isError } = useCandidateMatches(id);
   if (isLoading) return <Skeleton className="h-40 w-full" />;
   if (isError) return <ErrorState title="Failed to load matches" />;
+  if (Array.isArray(data) && data.length === 0) {
+    return (
+      <Card>
+        <EmptyState icon={<CheckCircle2 className="w-8 h-8" />} title="No Match History" description="This candidate has not been matched against any job requirements." />
+      </Card>
+    );
+  }
   return (
     <Card>
       <CardHeader><CardTitle>Match History</CardTitle></CardHeader>
-      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md overflow-auto">{JSON.stringify(data, null, 2)}</pre></CardContent>
     </Card>
   );
 }
@@ -74,10 +103,17 @@ function FeedbackTab({ id }: { id: string }) {
   const { data, isLoading, isError } = useCandidateFeedback(id);
   if (isLoading) return <Skeleton className="h-40 w-full" />;
   if (isError) return <ErrorState title="Failed to load feedback" />;
+  if (Array.isArray(data) && data.length === 0) {
+    return (
+      <Card>
+        <EmptyState icon={<FileQuestion className="w-8 h-8" />} title="No Recruiter Feedback" description="No human feedback has been recorded for this candidate." />
+      </Card>
+    );
+  }
   return (
     <Card>
       <CardHeader><CardTitle>Recruiter Feedback</CardTitle></CardHeader>
-      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md overflow-auto">{JSON.stringify(data, null, 2)}</pre></CardContent>
     </Card>
   );
 }
@@ -86,10 +122,17 @@ function MemoryTab({ id }: { id: string }) {
   const { data, isLoading, isError } = useCandidateMemory(id);
   if (isLoading) return <Skeleton className="h-40 w-full" />;
   if (isError) return <ErrorState title="Failed to load memory" />;
+  if (Array.isArray(data) && data.length === 0) {
+    return (
+      <Card>
+        <EmptyState icon={<History className="w-8 h-8" />} title="No Memory Records" description="No memory traces exist for this candidate." />
+      </Card>
+    );
+  }
   return (
     <Card>
       <CardHeader><CardTitle>Memory & Ground Truth</CardTitle></CardHeader>
-      <CardContent><pre className="text-xs bg-muted p-4 rounded-md">{JSON.stringify(data, null, 2)}</pre></CardContent>
+      <CardContent><pre className="text-xs bg-muted p-4 rounded-md overflow-auto">{JSON.stringify(data, null, 2)}</pre></CardContent>
     </Card>
   );
 }

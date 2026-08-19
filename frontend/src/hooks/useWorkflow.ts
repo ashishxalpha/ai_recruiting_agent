@@ -3,6 +3,7 @@ import { WorkflowService } from '@/services/workflow.service';
 
 export const workflowKeys = {
   all: ['workflow'] as const,
+  list: () => [...workflowKeys.all, 'list'] as const,
   detail: (id: string) => [...workflowKeys.all, 'detail', id] as const,
   timeline: (id: string) => [...workflowKeys.all, 'timeline', id] as const,
   graph: (id: string) => [...workflowKeys.all, 'graph', id] as const,
@@ -11,6 +12,13 @@ export const workflowKeys = {
   checkpoints: (id: string) => [...workflowKeys.all, 'checkpoints', id] as const,
   statistics: (id: string) => [...workflowKeys.all, 'statistics', id] as const,
 };
+
+export function useWorkflowList() {
+  return useQuery({
+    queryKey: workflowKeys.list(),
+    queryFn: () => WorkflowService.getList(),
+  });
+}
 
 export function useWorkflowSummary(id: string) {
   return useQuery({
