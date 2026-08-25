@@ -166,12 +166,25 @@ class JobQueryService:
         ]
 
     async def get_job_matches(self, job_id: UUID) -> List[JobCandidateMatchDTO]:
+        # 1. Find the latest search session for this job
+        session_stmt = (
+            select(SearchSessionModel.id)
+            .where(SearchSessionModel.job_requirement_id == job_id)
+            .order_by(desc(SearchSessionModel.created_at))
+            .limit(1)
+        )
+        session_result = await self.session.execute(session_stmt)
+        latest_session_id = session_result.scalar_one_or_none()
+
+        if not latest_session_id:
+            return []
+
+        # 2. Fetch matches only for the latest search session
         stmt = (
             select(CandidateMatchModel, CandidateModel, MatchExplanationModel)
-            .join(SearchSessionModel, SearchSessionModel.id == CandidateMatchModel.search_session_id)
             .join(CandidateModel, CandidateModel.id == CandidateMatchModel.candidate_id)
             .outerjoin(MatchExplanationModel, MatchExplanationModel.candidate_match_id == CandidateMatchModel.id)
-            .where(SearchSessionModel.job_requirement_id == job_id)
+            .where(CandidateMatchModel.search_session_id == latest_session_id)
             .order_by(desc(CandidateMatchModel.final_score))
         )
         result = await self.session.execute(stmt)

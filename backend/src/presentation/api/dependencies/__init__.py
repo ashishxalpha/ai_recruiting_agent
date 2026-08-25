@@ -80,15 +80,21 @@ def get_candidate_matching_service(session: AsyncSession = fastapi.Depends(get_d
     return CandidateMatchingService(session, ai_provider, persistence_service)
 
 def get_workflow_engine(session: AsyncSession = fastapi.Depends(get_db_session)):
+    import os
     from src.application.workflows.workflow_registry import InMemoryWorkflowDefinitionRegistry
     from src.infrastructure.workflows.langgraph_engine import LangGraphWorkflowEngine
     from src.infrastructure.workflows.checkpoints.database import DatabaseCheckpointStore
+    from src.infrastructure.providers.ai.openai import OpenAIExtractionProvider
+    from src.application.workflows.agents.outreach_agent import OutreachWorkflowDefinition
+    from src.infrastructure.database.base import async_session_maker
     
     registry = InMemoryWorkflowDefinitionRegistry()
     
-    from src.infrastructure.workflows.nodes.registry import RealNodeRegistry
+    api_key = os.getenv("OPENAI_API_KEY", "dummy_key")
+    model_name = os.getenv("AI_EXTRACTION_MODEL", "gpt-4o")
+    ai_provider = OpenAIExtractionProvider(api_key=api_key, model_name=model_name)
     
-    registry.register(RecruitingLangGraphDefinition(RealNodeRegistry()))
+    registry.register(OutreachWorkflowDefinition(ai_provider, async_session_maker))
     
-    checkpointer = DatabaseCheckpointStore(session)
+    checkpointer = DatabaseCheckpointStore(async_session_maker)
     return LangGraphWorkflowEngine(registry, checkpointer, session)

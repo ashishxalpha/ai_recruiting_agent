@@ -1,25 +1,73 @@
 "use client";
 
-import { use } from "react";
-import { useState } from "react";
+import { useState, useEffect, use } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Check, X, HelpCircle, ThumbsUp, CheckCircle, Search } from "lucide-react";
+import { ArrowLeft, Check, X, HelpCircle, ThumbsUp, Search, Sparkles, Loader2, Send } from "lucide-react";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import { useJobMatches, useJobDetails } from "@/hooks/useJobs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/error-state";
 import { EmptyState } from "@/components/ui/empty-state";
+import { apiClient } from "@/lib/api-client";
 
 export default function CandidateMatchingPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const jobId = resolvedParams.id;
   const [selectedMatchIdx, setSelectedMatchIdx] = useState<number>(0);
+  const [isOutreachLoading, setIsOutreachLoading] = useState(false);
+  const [outreachWorkflowId, setOutreachWorkflowId] = useState<string | null>(null);
+  const [draftEmailContent, setDraftEmailContent] = useState<string>("");
+  const [outreachStatus, setOutreachStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOutreachWorkflowId(null);
+    setDraftEmailContent("");
+    setOutreachStatus(null);
+    setIsOutreachLoading(false);
+  }, [selectedMatchIdx]);
 
   const { data: jobDetails, isLoading: isJobLoading } = useJobDetails(jobId);
   const { data: matches, isLoading: isMatchesLoading, isError: isMatchesError } = useJobMatches(jobId);
+
+  const handleStartOutreach = async () => {
+    if (!matches || !matches[selectedMatchIdx]) return;
+    setIsOutreachLoading(true);
+    try {
+      const data: any = await apiClient.post(`/api/v1/outreach/start`, {
+        job_id: jobId,
+        candidate_id: matches[selectedMatchIdx].candidate_id
+      });
+      setOutreachWorkflowId(data.workflow_id);
+      setOutreachStatus(data.status);
+      if (data.draft_email_content) {
+        setDraftEmailContent(data.draft_email_content);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsOutreachLoading(false);
+    }
+  };
+
+  const handleResumeOutreach = async (action: string) => {
+    if (!outreachWorkflowId) return;
+    setIsOutreachLoading(true);
+    try {
+      const data: any = await apiClient.post(`/api/v1/outreach/${outreachWorkflowId}/resume`, {
+        action,
+        draft_email_content: draftEmailContent
+      });
+      setOutreachStatus(data.status);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsOutreachLoading(false);
+    }
+  };
 
   if (isMatchesLoading || isJobLoading) {
     return (
@@ -87,7 +135,7 @@ export default function CandidateMatchingPage({ params }: { params: Promise<{ id
         </div>
 
         {/* Match Details & Explainability */}
-        <div className="col-span-2 flex flex-col space-y-6 overflow-y-auto pb-6 pr-2">
+        <div className="col-span-2 space-y-6 overflow-y-auto min-h-0 pb-6 pr-2">
           {matches && matches.length > 0 && matches[selectedMatchIdx] ? (
             <>
               <Card>
@@ -150,18 +198,64 @@ export default function CandidateMatchingPage({ params }: { params: Promise<{ id
                 </CardContent>
               </Card>
 
-              {/* Feedback Action Card */}
-              <Card className="border-primary/50 shadow-sm mt-auto">
+              {/* Agentic Outreach Card */}
+              <Card className="border-indigo-500/50 shadow-sm mt-4 bg-indigo-50/10">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Recruiter Feedback</CardTitle>
-                  <CardDescription>Train the system by rating this match.</CardDescription>
+                  <CardTitle className="text-lg flex items-center text-indigo-500">
+                    <Sparkles className="w-5 h-5 mr-2" /> Agentic Outreach
+                  </CardTitle>
+                  <CardDescription>
+                    Automatically draft a highly personalized email to this candidate based on their AI match profile.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex gap-3">
-                    <Button className="flex-1 bg-green-600 hover:bg-green-700"><ThumbsUp className="w-4 h-4 mr-2"/> Approve</Button>
-                    <Button className="flex-1" variant="outline"><HelpCircle className="w-4 h-4 mr-2"/> Shortlist</Button>
-                    <Button className="flex-1" variant="destructive"><X className="w-4 h-4 mr-2"/> Reject</Button>
-                  </div>
+                  {outreachStatus === null ? (
+                    <Button 
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                      onClick={handleStartOutreach}
+                      disabled={isOutreachLoading}
+                    >
+                      {isOutreachLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                      Start Outreach Workflow
+                    </Button>
+                  ) : outreachStatus === "DRAFTED" ? (
+                    <div className="space-y-4">
+                      <div className="bg-muted p-2 rounded-md">
+                        <p className="text-xs font-semibold mb-2">Review Drafted Email:</p>
+                        <Textarea 
+                          value={draftEmailContent} 
+                          onChange={(e) => setDraftEmailContent(e.target.value)}
+                          className="min-h-[150px] max-h-[300px] overflow-y-auto resize-none font-mono text-xs"
+                        />
+                      </div>
+                      <div className="flex gap-3">
+                        <Button 
+                          className="flex-1" 
+                          onClick={() => handleResumeOutreach("APPROVED")}
+                          disabled={isOutreachLoading}
+                        >
+                          {isOutreachLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                          Send Email
+                        </Button>
+                        <Button 
+                          className="flex-1" 
+                          variant="outline"
+                          onClick={() => setOutreachStatus(null)}
+                          disabled={isOutreachLoading}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : outreachStatus === "SENT" ? (
+                    <div className="flex flex-col items-center justify-center py-4 text-green-600">
+                      <Check className="w-8 h-8 mb-2" />
+                      <p className="font-semibold">Email Sent Successfully!</p>
+                      <Button variant="link" onClick={() => setOutreachStatus(null)}>Start another</Button>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">Status: {outreachStatus}</div>
+                  )}
                 </CardContent>
               </Card>
             </>

@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from .endpoints import resumes, documents, candidates, jobs, extractions, search, feedback, outcomes, analytics, stream, workflows, memory, tools, agents, coordinator, organization, dashboard, auth, background_jobs
+from .endpoints import resumes, documents, candidates, jobs, extractions, search, feedback, outcomes, analytics, stream, workflows, memory, tools, agents, coordinator, organization, dashboard, auth, background_jobs, outreach
 
 api_router = APIRouter()
 
@@ -22,3 +22,4 @@ api_router.include_router(tools.router, prefix="/tools", tags=["tools"])
 api_router.include_router(agents.router, prefix="/agents", tags=["agents"])
 api_router.include_router(coordinator.router, prefix="/coordinator", tags=["coordinator"])
 api_router.include_router(organization.router, prefix="/organization", tags=["organization"])
+api_router.include_router(outreach.router)

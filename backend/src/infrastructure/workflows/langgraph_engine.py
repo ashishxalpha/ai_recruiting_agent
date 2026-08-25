@@ -34,7 +34,9 @@ class LangGraphWorkflowEngine(WorkflowEngine):
             workflow_name=definition.name,
             workflow_version=definition.version,
             thread_id=thread_id,
-            status="RUNNING"
+            status="RUNNING",
+            job_id=uuid.UUID(state["job_id"]) if state.get("job_id") else None,
+            candidate_id=uuid.UUID(state["candidate_id"]) if state.get("candidate_id") else None
         )
         self.db.add(execution)
         await self.db.commit()
@@ -71,7 +73,9 @@ class LangGraphWorkflowEngine(WorkflowEngine):
         
     async def resume(self, workflow_id: uuid.UUID, user_input: Any = None) -> RecruitingWorkflowState:
         result = await self.db.execute(
-            select(WorkflowExecutionModel).where(WorkflowExecutionModel.id == workflow_id)
+            select(WorkflowExecutionModel).where(
+                (WorkflowExecutionModel.id == workflow_id) | (WorkflowExecutionModel.thread_id == str(workflow_id))
+            )
         )
         execution = result.scalar_one_or_none()
         if not execution:

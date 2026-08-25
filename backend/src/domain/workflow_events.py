@@ -5,7 +5,7 @@ from src.domain.events import DomainEvent
 
 class WorkflowStarted(DomainEvent):
     workflow_id: UUID
-    candidate_document_id: UUID
+    candidate_document_id: Optional[UUID] = None
     graph_version: str
 
 class WorkflowNodeStarted(DomainEvent):
