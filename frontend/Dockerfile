@@ -20,6 +20,7 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
+ENV HOSTNAME 0.0.0.0
 
 # You only need to copy next.config.js if you are NOT using the default configuration
 # COPY --from=builder /app/next.config.js ./

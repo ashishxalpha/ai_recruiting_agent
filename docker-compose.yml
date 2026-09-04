@@ -3,8 +3,6 @@ services:
   db:
     image: pgvector/pgvector:pg15
     restart: always
-    env_file:
-      - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-copilot}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-copilot_password}
@@ -43,32 +41,42 @@ services:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-copilot}:${POSTGRES_PASSWORD:-copilot_password}@db:5432/${POSTGRES_DB:-ai_recruiting}
       - STORAGE_BASE_PATH=/storage
       - REDIS_URL=redis://redis:6379/0
+      - CORS_ORIGINS=http://localhost:3000
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     volumes:
-      - ./backend/src:/app/src
-      - ./backend/migrations:/app/migrations
       - storage_resumes:/storage/resumes
       - storage_documents:/storage/documents
       - storage_temp:/storage/temp
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     restart: always
-    env_file:
-      - .env
     ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
       - backend
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
 volumes:
   postgres_data:

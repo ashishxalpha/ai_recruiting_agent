@@ -2,8 +2,12 @@ import { apiClient } from "@/lib/api-client";
 import {
   JobListResponse,
   JobDetailsDTO,
-  JobDetailsSchema
+  JobDetailsSchema,
+  JobCandidateMatchDTO,
+  JobWorkflowDTO,
+  JobAnalyticsDTO
 } from "@/types/job";
+import { CandidateSummaryDTO } from "@/types/candidate";
 
 export interface JobListParams {
   page?: number;
@@ -38,31 +42,38 @@ export class JobService {
 
   // Lazy loaded bounded contexts
 
-  static async getCandidates(id: string) {
-    return apiClient.get(`/api/v1/jobs/${id}/candidates`);
+  static async getCandidates(id: string): Promise<CandidateSummaryDTO[]> {
+    const response = await apiClient.get(`/api/v1/jobs/${id}/candidates`);
+    return response as unknown as CandidateSummaryDTO[];
   }
 
-  static async getMatches(id: string) {
-    return apiClient.get(`/api/v1/jobs/${id}/matches`);
+  static async getMatches(id: string): Promise<JobCandidateMatchDTO[]> {
+    const response = await apiClient.get(`/api/v1/jobs/${id}/matches`);
+    return response as unknown as JobCandidateMatchDTO[];
   }
 
-  static async getWorkflow(id: string) {
-    return apiClient.get(`/api/v1/jobs/${id}/workflow`);
+  static async getWorkflow(id: string): Promise<JobWorkflowDTO[]> {
+    const response = await apiClient.get(`/api/v1/jobs/${id}/workflow`);
+    return response as unknown as JobWorkflowDTO[];
   }
 
-  static async getAnalytics(id: string) {
-    return apiClient.get(`/api/v1/jobs/${id}/analytics`);
+  static async getAnalytics(id: string): Promise<JobAnalyticsDTO> {
+    const response = await apiClient.get(`/api/v1/jobs/${id}/analytics`);
+    return response as unknown as JobAnalyticsDTO;
   }
 
-  static async getFeedback(id: string) {
-    return apiClient.get(`/api/v1/jobs/${id}/feedback`);
+  static async getFeedback(id: string): Promise<Record<string, unknown>[]> {
+    const response = await apiClient.get(`/api/v1/jobs/${id}/feedback`);
+    return response as unknown as Record<string, unknown>[];
   }
 
-  static async getDocuments(id: string) {
-    return apiClient.get(`/api/v1/jobs/${id}/documents`);
+  static async getDocuments(id: string): Promise<Record<string, unknown>[]> {
+    const response = await apiClient.get(`/api/v1/jobs/${id}/documents`);
+    return response as unknown as Record<string, unknown>[];
   }
 
-  static async getHistory(id: string) {
-    return apiClient.get(`/api/v1/jobs/${id}/history`);
+  static async getHistory(id: string): Promise<Record<string, unknown>[]> {
+    const response = await apiClient.get(`/api/v1/jobs/${id}/history`);
+    return response as unknown as Record<string, unknown>[];
   }
 }

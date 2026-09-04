@@ -10,6 +10,9 @@ export interface PlaygroundExtraction {
   raw_ai_response: any;
   normalized_response: any;
   overall_confidence?: number;
+  education_confidence?: number;
+  experience_confidence?: number;
+  skills_confidence?: number;
   input_tokens?: number;
   output_tokens?: number;
   total_tokens?: number;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { Suspense } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkflowOverviewWidget } from "./components/WorkflowOverviewWidget";
 import { WorkflowTimelineWidget } from "./components/WorkflowTimelineWidget";
@@ -61,7 +62,7 @@ function WorkflowSelector() {
                   <span className="font-semibold">{wf.id}</span>
                 </div>
                 <div className="text-sm text-muted-foreground flex items-center space-x-2">
-                  <span>Started: {new Date(wf.started_at).toLocaleString()}</span>
+                  <span>Started: {wf.started_at ? new Date(wf.started_at).toLocaleString() : "Not started"}</span>
                   <span>•</span>
                   <span>Version: {wf.workflow_version}</span>
                 </div>
@@ -84,7 +85,7 @@ function WorkflowSelector() {
   );
 }
 
-export default function WorkflowWorkspace() {
+function WorkflowWorkspaceContent() {
   const [activeTab, setActiveTab] = useState("overview");
   const searchParams = useSearchParams();
   const workflowId = searchParams.get('id');
@@ -144,5 +145,13 @@ export default function WorkflowWorkspace() {
         </div>
       </Tabs>
     </div>
+  );
+}
+
+export default function WorkflowWorkspace() {
+  return (
+    <Suspense fallback={<Skeleton className="h-40 w-full" />}>
+      <WorkflowWorkspaceContent />
+    </Suspense>
   );
 }

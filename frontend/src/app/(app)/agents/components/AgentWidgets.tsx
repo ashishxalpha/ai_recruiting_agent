@@ -32,7 +32,7 @@ export function AgentOverviewWidget() {
 
 export function AgentRuntimeWidget() {
   const { data: overviewData } = useAgentOverview();
-  const agentId = overviewData?.[0]?.id || "00000000-0000-0000-0000-000000000000";
+  const agentId = overviewData?.data?.[0]?.id || "00000000-0000-0000-0000-000000000000";
   const { data, isLoading, isError } = useAgentRuntime(agentId);
   return (
     <AgentWidgetWrapper
@@ -50,7 +50,7 @@ export function AgentRuntimeWidget() {
 
 export function AgentSessionsWidget() {
   const { data: overviewData } = useAgentOverview();
-  const agentId = overviewData?.[0]?.id || "00000000-0000-0000-0000-000000000000";
+  const agentId = overviewData?.data?.[0]?.id || "00000000-0000-0000-0000-000000000000";
   const { data, isLoading, isError } = useAgentSessions(agentId);
   return (
     <AgentWidgetWrapper
@@ -68,7 +68,7 @@ export function AgentSessionsWidget() {
 
 export function AgentThoughtsWidget() {
   const { data: overviewData } = useAgentOverview();
-  const agentId = overviewData?.[0]?.id || "00000000-0000-0000-0000-000000000000";
+  const agentId = overviewData?.data?.[0]?.id || "00000000-0000-0000-0000-000000000000";
   const { data, isLoading, isError } = useAgentThoughts(agentId);
   return (
     <AgentWidgetWrapper
@@ -86,7 +86,7 @@ export function AgentThoughtsWidget() {
 
 export function AgentActionsWidget() {
   const { data: overviewData } = useAgentOverview();
-  const agentId = overviewData?.[0]?.id || "00000000-0000-0000-0000-000000000000";
+  const agentId = overviewData?.data?.[0]?.id || "00000000-0000-0000-0000-000000000000";
   const { data, isLoading, isError } = useAgentActions(agentId);
   return (
     <AgentWidgetWrapper
@@ -104,7 +104,7 @@ export function AgentActionsWidget() {
 
 export function AgentToolsWidget() {
   const { data: overviewData } = useAgentOverview();
-  const agentId = overviewData?.[0]?.id || "00000000-0000-0000-0000-000000000000";
+  const agentId = overviewData?.data?.[0]?.id || "00000000-0000-0000-0000-000000000000";
   const { data, isLoading, isError } = useAgentTools(agentId);
   return (
     <AgentWidgetWrapper
@@ -122,7 +122,7 @@ export function AgentToolsWidget() {
 
 export function AgentMemoryWidget() {
   const { data: overviewData } = useAgentOverview();
-  const agentId = overviewData?.[0]?.id || "00000000-0000-0000-0000-000000000000";
+  const agentId = overviewData?.data?.[0]?.id || "00000000-0000-0000-0000-000000000000";
   const { data, isLoading, isError } = useAgentMemory(agentId);
   return (
     <AgentWidgetWrapper
@@ -140,7 +140,7 @@ export function AgentMemoryWidget() {
 
 export function AgentReflectionWidget() {
   const { data: overviewData } = useAgentOverview();
-  const agentId = overviewData?.[0]?.id || "00000000-0000-0000-0000-000000000000";
+  const agentId = overviewData?.data?.[0]?.id || "00000000-0000-0000-0000-000000000000";
   const { data, isLoading, isError } = useAgentReflection(agentId);
   return (
     <AgentWidgetWrapper
@@ -158,7 +158,7 @@ export function AgentReflectionWidget() {
 
 export function AgentReplayWidget() {
   const { data: overviewData } = useAgentOverview();
-  const agentId = overviewData?.[0]?.id || "00000000-0000-0000-0000-000000000000";
+  const agentId = overviewData?.data?.[0]?.id || "00000000-0000-0000-0000-000000000000";
   const { data, isLoading, isError } = useAgentReplay(agentId);
   return (
     <AgentWidgetWrapper

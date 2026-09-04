@@ -43,7 +43,7 @@ export default function NewJobPage() {
         experience_required: formData.experience_required,
       };
 
-      const response = await apiClient.post("/api/v1/jobs/requirements", payload);
+      const response = await apiClient.post("/api/v1/jobs/requirements", payload) as unknown as { id: string };
       router.push(`/jobs/${response.id}`);
     } catch (err: any) {
       setError(err.message || "Failed to create job requirement.");
