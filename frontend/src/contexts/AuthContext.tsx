@@ -30,37 +30,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const fetchUser = async () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
       try {
         const response = await apiClient.get('/api/v1/auth/me');
         setUser(response as any);
       } catch (err) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+        }
         setUser(null);
       } finally {
         setLoading(false);
       }
     };
     
-    // Don't fetch user on public routes if not needed, but generally good to know if logged in
     fetchUser();
   }, []);
 
   const login = async (data: any) => {
-    await apiClient.post('/api/v1/auth/login', data);
+    const res: any = await apiClient.post('/api/v1/auth/login', data);
+    if (res?.access_token && typeof window !== 'undefined') {
+      localStorage.setItem('token', res.access_token);
+    }
     const response = await apiClient.get('/api/v1/auth/me');
     setUser(response as any);
     router.push('/');
   };
 
   const register = async (data: any) => {
-    await apiClient.post('/api/v1/auth/register', data);
-    // After register, either login or redirect to login
-    await login({ email: data.email, password: data.password });
+    const res: any = await apiClient.post('/api/v1/auth/register', data);
+    if (res?.access_token && typeof window !== 'undefined') {
+      localStorage.setItem('token', res.access_token);
+    }
+    const response = await apiClient.get('/api/v1/auth/me');
+    setUser(response as any);
+    router.push('/');
   };
 
   const logout = async () => {
-    await apiClient.post('/api/v1/auth/logout');
-    setUser(null);
-    router.push('/login');
+    try {
+      await apiClient.post('/api/v1/auth/logout');
+    } catch (e) {
+      // ignore network errors on logout
+    } finally {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+      }
+      setUser(null);
+      router.push('/login');
+    }
   };
 
   return (

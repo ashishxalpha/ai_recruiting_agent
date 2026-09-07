@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
-from sqlalchemy import String, Text, DateTime, ForeignKey, Enum as SQLEnum, Float, JSON, Integer
+from sqlalchemy import String, Text, DateTime, ForeignKey, Enum as SQLEnum, Float, JSON, Integer, Boolean
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -16,6 +16,17 @@ class TimestampMixin:
 
 class SoftDeleteMixin:
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+class UserModel(Base, TimestampMixin, SoftDeleteMixin):
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    first_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    last_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    role: Mapped[str] = mapped_column(String(50), default="recruiter", nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 class CandidateModel(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "candidates"

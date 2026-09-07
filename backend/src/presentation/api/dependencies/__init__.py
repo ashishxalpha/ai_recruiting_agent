@@ -1,7 +1,7 @@
 import fastapi
 from fastapi import Request, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 from src.infrastructure.database.base import get_session
 from src.infrastructure.database.repositories.document_repository import SQLAlchemyCandidateDocumentRepository
@@ -98,3 +98,57 @@ def get_workflow_engine(session: AsyncSession = fastapi.Depends(get_db_session))
     
     checkpointer = DatabaseCheckpointStore(async_session_maker)
     return LangGraphWorkflowEngine(registry, checkpointer, session)
+
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from uuid import UUID
+from src.infrastructure.auth.security import decode_access_token
+from src.infrastructure.database.models import UserModel
+from src.infrastructure.database.repositories.user_repository import SQLAlchemyUserRepository
+from src.application.services.auth_service import AuthService
+
+http_bearer = HTTPBearer(auto_error=False)
+
+def get_user_repository(session: AsyncSession = fastapi.Depends(get_db_session)) -> SQLAlchemyUserRepository:
+    return SQLAlchemyUserRepository(session)
+
+def get_auth_service(user_repo: SQLAlchemyUserRepository = fastapi.Depends(get_user_repository)) -> AuthService:
+    return AuthService(user_repo)
+
+async def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = fastapi.Depends(http_bearer),
+    user_repo: SQLAlchemyUserRepository = fastapi.Depends(get_user_repository),
+) -> UserModel:
+    if not credentials:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication token missing",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    payload = decode_access_token(credentials.credentials)
+    if not payload or "sub" not in payload:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired authentication token",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    try:
+        user_id = UUID(payload["sub"])
+    except (ValueError, TypeError):
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
+            detail="Malformed token payload",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    user = await user_repo.get_by_id(user_id)
+    if not user:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
+            detail="User no longer exists",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    if not user.is_active:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive"
+        )
+    return user

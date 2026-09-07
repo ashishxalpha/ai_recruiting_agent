@@ -10,9 +10,12 @@ import {
   Activity, 
   BarChart3, 
   MessageSquareHeart, 
-  Network
+  Network,
+  LogOut,
+  LogIn
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NAV_ITEMS = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -28,6 +31,19 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+
+  const initials = user?.first_name && user?.last_name
+    ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
+    : (user?.email ? user.email.slice(0, 2).toUpperCase() : "RC");
+
+  const displayName = user?.first_name && user?.last_name
+    ? `${user.first_name} ${user.last_name}`
+    : (user?.email ? user.email.split("@")[0] : "Recruiter");
+
+  const displayRole = user?.role
+    ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+    : "Member";
 
   return (
     <div className="w-64 border-r bg-card/50 flex flex-col h-screen fixed top-0 left-0">
@@ -60,15 +76,34 @@ export function Sidebar() {
       </nav>
       
       <div className="p-4 border-t">
-        <div className="flex items-center space-x-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs">
-            AK
+        {user ? (
+          <div className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-muted/40">
+            <div className="flex items-center space-x-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-primary/20 text-primary font-semibold flex items-center justify-center text-xs shrink-0">
+                {initials}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-semibold truncate text-foreground">{displayName}</span>
+                <span className="text-[10px] text-muted-foreground truncate">{displayRole}</span>
+              </div>
+            </div>
+            <button
+              onClick={() => logout()}
+              title="Sign out"
+              className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">Ashish K.</span>
-            <span className="text-xs text-muted-foreground">Lead Recruiter</span>
-          </div>
-        </div>
+        ) : (
+          <Link
+            href="/login"
+            className="flex items-center justify-center space-x-2 w-full py-2 px-3 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            <span>Sign In</span>
+          </Link>
+        )}
       </div>
     </div>
   );

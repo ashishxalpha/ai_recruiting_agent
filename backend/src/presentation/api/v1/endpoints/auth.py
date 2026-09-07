@@ -1,45 +1,49 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, status
 from typing import Dict, Any
-import base64
-import json
-import hmac
-import hashlib
-import os
-import time
+from src.application.schemas.auth import (
+    UserRegisterRequest,
+    UserLoginRequest,
+    TokenResponse,
+    UserResponse
+)
+from src.application.services.auth_service import AuthService
+from src.presentation.api.dependencies import get_auth_service, get_current_user
+from src.infrastructure.database.models import UserModel
 
 router = APIRouter()
 
-def generate_jwt(payload: dict, secret: str) -> str:
-    header = base64.urlsafe_b64encode(json.dumps({"alg": "HS256", "typ": "JWT"}).encode()).decode().rstrip("=")
-    payload_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
-    
-    signature = hmac.new(
-        secret.encode(),
-        f"{header}.{payload_b64}".encode(),
-        hashlib.sha256
-    ).digest()
-    
-    signature_b64 = base64.urlsafe_b64encode(signature).decode().rstrip("=")
-    return f"{header}.{payload_b64}.{signature_b64}"
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+async def register(
+    request: UserRegisterRequest,
+    auth_service: AuthService = Depends(get_auth_service)
+) -> Dict[str, Any]:
+    user, token = await auth_service.register(request)
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": UserResponse.from_user(user).model_dump(mode="json")
+    }
 
 @router.post("/login")
-async def login() -> Dict[str, str]:
-    secret = os.getenv("JWT_SECRET_KEY", "default_secret")
-    payload = {
-        "sub": "123e4567-e89b-12d3-a456-426614174000",
-        "email": "admin@example.com",
-        "role": "admin",
-        "iat": int(time.time()),
-        "exp": int(time.time()) + 86400
+async def login(
+    request: UserLoginRequest,
+    auth_service: AuthService = Depends(get_auth_service)
+) -> Dict[str, Any]:
+    user, token = await auth_service.authenticate(request)
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": UserResponse.from_user(user).model_dump(mode="json")
     }
-    token = generate_jwt(payload, secret)
-    return {"access_token": token, "token_type": "bearer"}
 
 @router.get("/me")
-async def get_me():
-    return {
-        "id": "123e4567-e89b-12d3-a456-426614174000",
-        "email": "admin@example.com",
-        "role": "admin",
-        "full_name": "Admin User"
-    }
+async def get_me(
+    current_user: UserModel = Depends(get_current_user)
+) -> Dict[str, Any]:
+    return UserResponse.from_user(current_user).model_dump(mode="json")
+
+@router.post("/logout")
+async def logout(
+    current_user: UserModel = Depends(get_current_user)
+) -> Dict[str, str]:
+    return {"message": "Logged out successfully"}

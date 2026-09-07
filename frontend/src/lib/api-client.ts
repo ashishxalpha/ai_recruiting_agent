@@ -28,7 +28,12 @@ const createApiClient = (): AxiosInstance => {
   // Request Interceptor
   client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-      // Add correlation ID or auth tokens here if needed
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token');
+        if (token && config.headers) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      }
       return config;
     },
     (error) => {
@@ -48,7 +53,10 @@ const createApiClient = (): AxiosInstance => {
         const message = data?.detail || data?.message || error.message;
 
         if (status === 401) {
-          toast.error("Session expired. Please log in again.");
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('token');
+          }
+          toast.error("Session expired or unauthorized. Please log in.");
         } else if (status >= 500) {
           toast.error("An internal server error occurred.");
         }
