@@ -2,6 +2,7 @@ import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 import { Toaster } from "sonner";
 import { CommandPalette } from "./command-palette";
+import { GuestBanner } from "./guest-banner";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,6 +10,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="pl-64 flex flex-col min-h-screen">
         <Topbar />
+        <GuestBanner />
         <main className="flex-1 p-8 overflow-y-auto">
           {children}
         </main>
