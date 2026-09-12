@@ -3,8 +3,8 @@
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePathname, useRouter } from "next/navigation";
-import { isRouteAllowedForGuest, getGuestRestrictionDetails } from "@/config/guest-access";
-import { Lock, ShieldAlert, ArrowRight, ArrowLeft } from "lucide-react";
+import { isRouteAllowedForGuest } from "@/config/guest-access";
+import { Lock } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,70 +21,46 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, pathname, router]);
 
-  // Render high-fidelity loading state while checking session token
+  // Clean, minimal loading indicator matching dashboard widgets
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-bold text-xl animate-pulse">
-            RC
-          </div>
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            <span>Verifying session security...</span>
-          </div>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  // If unauthenticated, prevent any content flash during redirect
   if (!user) {
     return null;
   }
 
-  // If in guest mode, enforce configurable route restrictions
+  // Intercept restricted routes for guests with a clean, minimal card
   if (isGuest && !isRouteAllowedForGuest(pathname)) {
-    const restriction = getGuestRestrictionDetails(pathname);
-
     return (
-      <div className="max-w-2xl mx-auto my-12 p-8 rounded-2xl bg-card border border-border shadow-xl space-y-6 text-center">
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-          <Lock className="w-7 h-7" />
+      <div className="max-w-md mx-auto my-16 p-6 rounded-xl border border-border bg-card text-center space-y-4 shadow-sm">
+        <div className="w-10 h-10 mx-auto rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+          <Lock className="w-5 h-5" />
         </div>
 
-        <div className="space-y-2">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
-            <ShieldAlert className="w-3.5 h-3.5" />
-            Guest Access Restricted
-          </span>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">{restriction.title}</h2>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            {restriction.description}
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold text-foreground">Sign in required</h2>
+          <p className="text-xs text-muted-foreground">
+            This section is restricted in guest mode. Sign in with a recruiter account to access it.
           </p>
         </div>
 
-        <div className="p-4 rounded-xl bg-muted/30 border border-border/50 text-left text-xs text-muted-foreground space-y-1.5">
-          <p className="font-semibold text-foreground">Why am I seeing this?</p>
-          <p>
-            You are browsing in <strong>Guest Mode</strong>. Candidate uploads, real-time workflow mutations, and recruiter evaluations are restricted to authenticated sessions to maintain data integrity.
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+        <div className="flex items-center justify-center gap-2 pt-2">
           <Link
             href={`/login?redirect=${encodeURIComponent(pathname)}`}
-            className={cn(buttonVariants({ variant: "default" }), "w-full sm:w-auto h-9 px-4")}
+            className={cn(buttonVariants({ variant: "default" }), "h-8 px-3 text-xs font-medium")}
           >
-            <span>Sign In with Recruiter Account</span>
-            <ArrowRight className="w-4 h-4 ml-2" />
+            Sign in
           </Link>
           <Link
             href="/"
-            className={cn(buttonVariants({ variant: "outline" }), "w-full sm:w-auto h-9 px-4")}
+            className={cn(buttonVariants({ variant: "outline" }), "h-8 px-3 text-xs font-medium")}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            <span>Return to Dashboard</span>
+            Back to dashboard
           </Link>
         </div>
       </div>
